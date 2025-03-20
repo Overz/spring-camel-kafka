@@ -59,8 +59,8 @@ spring:
     producer:
       acks: "all"
       retries: "3"
-      key-serializer: "org.springframework.kafka.support.serializer.JsonSerializer"
-      value-serializer: "org.springframework.kafka.support.serializer.JsonDeserializer"
+      key-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+      value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
 
 management:
   server:

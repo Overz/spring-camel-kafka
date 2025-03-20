@@ -1,0 +1,90 @@
+# https://github.com/apache/kafka/blob/trunk/docker/examples/README.md#using-environment-variables
+# https://kafka.apache.org/documentation/#configuration
+
+volumes:
+  kafka:
+    name: "kafka-kafka"
+
+networks:
+  app:
+    name: "kafka"
+
+x-kafka-commons: &kafka-commons
+  image: "apache/kafka:4.0.0"
+  restart: "always"
+  volumes:
+    - "kafka:/var/lib/kafka/data"
+  networks:
+    - "app"
+
+x-kafka-controller-commons: &kafka-controller-commons
+  <<: *kafka-commons
+  env_file:
+    - "./common.env"
+    - "./controller.env"
+
+x-kafka-broker-commons: &kafka-broker-commons
+  <<: *kafka-commons
+  env_file:
+    - "./common.env"
+    - "./broker.env"
+
+services:
+  # https://ui.docs.kafbat.io/configuration/misc-configuration-properties
+  kafbat:
+    image: "kafbat/kafka-ui:add8ef2"
+    restart: "always"
+    hostname: "kafbat-srv"
+    depends_on:
+      - kafka-controller-1
+      - kafka-controller-2
+      - kafka-broker-1
+      - kafka-broker-2
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: "Cluster-1"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka-broker-srv-1:9092,kafka-broker-srv-2:9092"
+    volumes:
+      - "./kafbat.yaml:/etc/kafkaui/dynamic_config.yaml"
+    ports:
+      - "8002:8080"
+    networks:
+      - "app"
+
+  kafka-controller-1:
+    <<: *kafka-controller-commons
+    hostname: "kafka-controller-srv-1"
+    environment:
+      KAFKA_NODE_ID: "1"
+
+  kafka-controller-2:
+    <<: *kafka-controller-commons
+    hostname: "kafka-controller-srv-2"
+    environment:
+      KAFKA_NODE_ID: "2"
+
+  kafka-broker-1:
+    <<: *kafka-broker-commons
+    hostname: "kafka-broker-srv-1"
+    environment:
+      KAFKA_NODE_ID: "3"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,EXTERNAL://:19092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-broker-srv-1:9092,EXTERNAL://localhost:19092"
+    ports:
+      - "19092:19092"
+    depends_on:
+      - kafka-controller-1
+      - kafka-controller-2
+
+  kafka-broker-2:
+    <<: *kafka-broker-commons
+    hostname: "kafka-broker-srv-2"
+    environment:
+      KAFKA_NODE_ID: "4"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,EXTERNAL://:29092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-broker-srv-2:9092,EXTERNAL://localhost:29092"
+    ports:
+      - "29092:29092"
+    depends_on:
+      - kafka-controller-1
+      - kafka-controller-2

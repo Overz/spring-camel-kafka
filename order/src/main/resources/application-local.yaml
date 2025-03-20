@@ -1,0 +1,22 @@
+server:
+  shutdown: "immediate"
+  error:
+    include-binding-errors: "always"
+    include-exception: "true"
+    include-message: "always"
+    include-stacktrace: "always"
+
+spring:
+  jpa:
+    show-sql: "true"
+    hibernate:
+      ddl-auto: "update"
+  devtools:
+    livereload:
+      enabled: "true"
+
+logging:
+  level:
+    com:
+      github:
+        overz: debug

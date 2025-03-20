@@ -1,0 +1,29 @@
+networks:
+  app:
+    name: "kafka"
+
+volumes:
+  mailhog:
+    name: "kafka-mailhog"
+
+include:
+  - "./infra/kafka/compose.yaml"
+  - "./infra/postgres/compose.yaml"
+
+services:
+  mailhog:
+    image: "mailhog/mailhog:v1.0.1"
+    restart: "always"
+    hostname: "mailhog-srv"
+    environment:
+      TZ: "America/Sao_Paulo"
+      MH_API_BIND_ADDR: ":8025"
+      MH_UI_BIND_ADDR: ":8025"
+      MH_SMTP_BIND_ADDR: ":1025"
+    ports:
+      - "8001:8025"
+      - "5000:1025"
+    volumes:
+      - "mailhog:/home/mailhog"
+    networks:
+      - "app"

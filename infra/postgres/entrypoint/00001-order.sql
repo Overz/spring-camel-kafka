@@ -1,0 +1,10 @@
+CREATE TABLE "order"
+(
+	cdOrder TEXT NOT NULL,
+	dsOrder TEXT NOT NULL,
+	flStatus TEXT NOT NULL,
+	dtCreatedAt TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	data JSONB,
+
+	CONSTRAINT fk_order PRIMARY KEY (cdOrder)
+);

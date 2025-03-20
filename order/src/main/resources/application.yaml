@@ -1,0 +1,88 @@
+debug: "${DEBUG:false}"
+
+server:
+  port: "${APP_PORT:3000}"
+  address: "${APP_ADDRESS:0.0.0.0}"
+  shutdown: "graceful"
+  servlet:
+    context-path: "${APP_CONTEXT_PATH:}"
+    session:
+      cookie:
+        http-only: "true"
+        secure: "true"
+  error:
+    include-binding-errors: "never"
+    include-message: "never"
+    include-path: "always"
+    include-stacktrace: "never"
+    include-exception: "false"
+
+spring:
+  profiles:
+    active: "${SPRING_PROFILES_ACTIVE:local}"
+  application:
+    name: "@project.artifactId@"
+  output:
+    ansi:
+      enabled: never
+  main:
+    banner-mode: off
+    allow-bean-definition-overriding: true
+  threads:
+    virtual:
+      enabled: true
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: false
+  jpa:
+    database-platform: "${DATABASE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}"
+    properties:
+      hibernate:
+        dialect: "${spring.jpa.database-platform}"
+        format_sql: "true"
+  datasource:
+    url: "${DATABASE_URL:jdbc:postgresql://localhost:5432/postgres?&applicationName=${spring.application.name}&logLevel=INFO}"
+    username: "${DATABASE_USERNAME:postgres}"
+    password: "${DATABASE_PASSWORD:postgres}"
+    driver-class-name: "${DATABASE_DRIVER:org.postgresql.Driver}"
+    hikari:
+      maximum-pool-size: "${HIKARI_MAXIMUM_POOL_SIZE:10}"
+      minimum-idle: "${HIKARI_MINIMUM_IDLE:2}"
+      auto-commit: "${HIKARI_AUTO_COMMIT:true}"
+      max-lifetime: "${HIKARI_MAX_LIFETIME:3600000}"
+  kafka:
+    client-id: "${spring.application.name}"
+    bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:19092,localhost:29092}"
+    producer:
+      acks: "all"
+      retries: "3"
+      key-serializer: "org.springframework.kafka.support.serializer.JsonSerializer"
+      value-serializer: "org.springframework.kafka.support.serializer.JsonDeserializer"
+
+management:
+  server:
+    port: "${APP_MANAGMENT_PORT:9090}"
+  endpoints:
+    access:
+      default: read_only
+    web:
+      exposure:
+        include:
+          - health
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: "${R4J_MAX_ATTEMPTS:8}"
+        wait-duration: "${R4J_WAIT_DURATION:2s}"
+        fail-after-max-attempts: "${R4J_FAIL_AFTER_MAX_ATTEMPTS:true}"
+        enable-exponential-backoff: "${R4J_ENABLE_EXPONENTIAL_BACKOFF:true}"
+        exponential-backoff-multiplier: "${R4J_EXPONENTIAL_BACKOFF_MULTIPLIER:1.4}"
+        exponential-max-wait-duration: "${R4J_EXPONENTIAL_MAX_WAIT_DURATION:3m}"
+        retry-exceptions:
+          - org.springframework.web.client.RestClientException
+          - java.net.SocketTimeoutException

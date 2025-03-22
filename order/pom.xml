@@ -10,25 +10,21 @@
 		<relativePath/>
 	</parent>
 
+	<properties>
+		<cxf-codegen-plugin.path>${wsdl.path}/test.wsdl</cxf-codegen-plugin.path>
+	</properties>
+
 	<artifactId>order</artifactId>
 	<version>0.0.1</version>
 	<name>${project.artifactId}</name>
 	<description>order</description>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web-services</artifactId>
-		</dependency>
-	</dependencies>
-
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-codegen-plugin</artifactId>
+			</plugin>
 			<plugin>
 				<groupId>org.graalvm.buildtools</groupId>
 				<artifactId>native-maven-plugin</artifactId>

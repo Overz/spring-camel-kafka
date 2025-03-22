@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+						 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+						 xmlns:tns="http://github.com/overz/"
+						 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+						 targetNamespace="http://github.com/overz/">
+
+	<types>
+		<xsd:schema targetNamespace="http://github.com/overz/">
+			<xsd:element name="testRequest">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="testId" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="testResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="result" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+	</types>
+
+	<message name="TestRequestMessage">
+		<part name="parameters" element="tns:testRequest"/>
+	</message>
+
+	<message name="TestResponseMessage">
+		<part name="parameters" element="tns:testResponse"/>
+	</message>
+
+	<portType name="TestServicePortType">
+		<operation name="processTest">
+			<input message="tns:TestRequestMessage"/>
+			<output message="tns:TestResponseMessage"/>
+		</operation>
+	</portType>
+
+
+	<binding name="TestServiceBinding" type="tns:TestServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<operation name="processTest">
+			<soap:operation soapAction=""/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+	</binding>
+
+	<service name="TestService">
+		<port name="TestServicePort" binding="tns:TestServiceBinding">
+			<soap:address location="http://localhost:3000/TestService"/>
+		</port>
+	</service>
+
+</definitions>

@@ -27,9 +27,14 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
+		<resources.path>${project.basedir}/src/main/resources</resources.path>
+		<openapi.path>${resources.path}/openapi</openapi.path>
+		<wsdl.path>${resources.path}/wsdl</wsdl.path>
 
 		<spring-cloud.version>2024.0.0</spring-cloud.version>
 		<camel.version>4.10.2</camel.version>
+		<camel.cxf.version>3.17.0</camel.cxf.version>
+		<cxf.version>4.1.1</cxf.version>
 		<junit.version>5.12.1</junit.version>
 		<dotenv.version>5.2.2</dotenv.version>
 		<spring.version>3.4.3</spring.version>
@@ -62,6 +67,13 @@
 				<groupId>org.apache.camel.springboot</groupId>
 				<artifactId>camel-spring-boot-bom</artifactId>
 				<version>${camel.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-bom</artifactId>
+				<version>${cxf.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -98,45 +110,33 @@
 			<scope>compile</scope>
 		</dependency>
 
-		<!-- CAMEL -->
+		<!-- CXF -->
 		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-core</artifactId>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-frontend-jaxws</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-rest-openapi</artifactId>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-transports-http</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-openapi-java</artifactId>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-bindings-xml</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-openapi-validator</artifactId>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-bindings-soap</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-jackson</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-servlet</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-resilience4j</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-kafka</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.camel.springboot</groupId>
-			<artifactId>camel-kafka-starter</artifactId>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-frontend-jaxrs</artifactId>
 		</dependency>
 
 		<!-- CAMEL SPRING -->
+		<dependency>
+			<groupId>org.apache.camel.springboot</groupId>
+			<artifactId>camel-spring-boot-starter</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.camel.springboot</groupId>
 			<artifactId>camel-jackson-starter</artifactId>
@@ -144,10 +144,6 @@
 		<dependency>
 			<groupId>org.apache.camel.springboot</groupId>
 			<artifactId>camel-servlet-starter</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.camel.springboot</groupId>
-			<artifactId>camel-spring-boot-starter</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.camel.springboot</groupId>
@@ -168,6 +164,18 @@
 		<dependency>
 			<groupId>org.apache.camel.springboot</groupId>
 			<artifactId>camel-springdoc-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel.springboot</groupId>
+			<artifactId>camel-kafka-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel.springboot</groupId>
+			<artifactId>camel-bean-validator-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel.springboot</groupId>
+			<artifactId>camel-cxf-soap-starter</artifactId>
 		</dependency>
 
 		<!-- SPRING -->
@@ -215,11 +223,46 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<pluginManagement>
 			<plugins>
+				<!-- Plugin para gerar classes Java a partir do WSDL -->
+				<plugin>
+					<groupId>org.apache.cxf</groupId>
+					<artifactId>cxf-codegen-plugin</artifactId>
+					<version>${cxf.version}</version>
+					<executions>
+						<execution>
+							<id>generate-sources</id>
+							<phase>generate-sources</phase>
+							<goals>
+								<goal>wsdl2java</goal>
+							</goals>
+							<configuration>
+								<sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
+								<wsdlOptions>
+									<!-- https://cxf.apache.org/docs/wsdl-to-java.html -->
+									<wsdlOption>
+										<!--suppress UnresolvedMavenProperty -->
+										<wsdl>${cxf-codegen-plugin.path}</wsdl>
+										<extraargs>
+											<extraarg>-autoNameResolution</extraarg>
+											<extraarg>-all</extraarg>
+											<extraarg>-mark-generated</extraarg>
+										</extraargs>
+									</wsdlOption>
+								</wsdlOptions>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+
 				<plugin>
 					<groupId>org.graalvm.buildtools</groupId>
 					<artifactId>native-maven-plugin</artifactId>

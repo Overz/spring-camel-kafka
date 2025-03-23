@@ -17,17 +17,17 @@ public class TestRouter extends RouteBuilder {
 
 	@Override
 	public void configure() throws Exception {
+		final var body = new TestResponse();
+		body.setResult("ok");
+
 		from(SOAP_TEST_ENTRYPOINT)
 			.id("test-service")
 			.log("RECEIVED!")
 			.process(exchange -> {
 				System.out.println("ok");
-
-				var body = new TestResponse();
-				body.setResult("ok");
-
 				exchange.getMessage().setBody(new MessageContentsList(body));
 			})
+			.log("response: ${body}")
 			.end()
 		;
 	}

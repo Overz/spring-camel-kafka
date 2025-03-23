@@ -62,14 +62,11 @@ spring:
       key-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
       value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
 
-#cxf:
-#  jaxrs:
-#    classes-scan: true
-#    classes-scan-packages: "com.github.overz.wsdl"
-
+# https://camel.apache.org/components/4.10.x/cxf-component.html
 cxf:
   path: "/services"
 
+# https://camel.apache.org/camel-spring-boot/4.10.x/spring-boot.html
 camel:
   servlet:
     mapping:

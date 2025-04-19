@@ -7,7 +7,7 @@
 		<groupId>com.github.overz</groupId>
 		<artifactId>spring-camel-kafka</artifactId>
 		<version>0.0.1</version>
-		<relativePath/>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>notification</artifactId>

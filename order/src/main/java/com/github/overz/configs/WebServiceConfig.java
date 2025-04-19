@@ -1,16 +1,15 @@
 package com.github.overz.configs;
 
 import com.github.overz.TestServicePortType;
+import com.github.overz.interceptors.SoapRequiredBodyInterceptor;
 import jakarta.validation.Validation;
-import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import org.apache.camel.component.cxf.common.DataFormat;
 import org.apache.camel.component.cxf.jaxws.CxfEndpoint;
 import org.apache.cxf.annotations.SchemaValidation.SchemaValidationType;
-import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.feature.validation.SchemaValidationFeature;
-import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
-import org.apache.cxf.phase.Phase;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -26,15 +25,16 @@ import java.util.Map;
 
 @Configuration
 public class WebServiceConfig {
-	public static final String SOAP_ENDPOINT_BEAN = "testServiceEndpoint";
+	public static final String SOAP_ENTPOINT_BEAN = "soap-test-endpoint-bean";
 
 	private static final Map<String, SchemaValidationType> validationSchemas = Collections.synchronizedMap(Map.of(
 		"processTest", SchemaValidationType.BOTH
 	));
 
 	@Bean
-	public Validator validator() {
-		return Validation.buildDefaultValidatorFactory().getValidator();
+	@ConditionalOnMissingBean(ValidatorFactory.class)
+	public ValidatorFactory validator() {
+		return Validation.buildDefaultValidatorFactory();
 	}
 
 	@Bean
@@ -46,23 +46,15 @@ public class WebServiceConfig {
 	}
 
 	@Bean
-	public AbstractPhaseInterceptor<SoapMessage> requiredBodyInterceptor() {
-		return new AbstractPhaseInterceptor<>(Phase.PRE_INVOKE) {
-			@Override
-			public void handleMessage(SoapMessage message) throws Fault {
-				final var content = message.getContent(List.class);
-				if (content == null || content.isEmpty()) {
-					throw new Fault(new IllegalArgumentException("No content"));
-				}
-			}
-		};
+	public AbstractPhaseInterceptor<Message> requiredBodyInterceptor() {
+		return new SoapRequiredBodyInterceptor();
 	}
 
-	@Bean(SOAP_ENDPOINT_BEAN)
+	@Bean(SOAP_ENTPOINT_BEAN)
 	public CxfEndpoint testServiceEndpoint(
 		@Value("classpath:wsdl/test.wsdl") Resource resource,
 		SchemaValidationFeature schemaValidationFeature,
-		@Qualifier("requiredBodyInterceptor") AbstractPhaseInterceptor<SoapMessage> requiredBodyInterceptor
+		@Qualifier("requiredBodyInterceptor") AbstractPhaseInterceptor<Message> requiredBodyInterceptor
 	) throws IOException {
 		final var endpoint = new CxfEndpoint();
 

@@ -7,17 +7,17 @@
 		<groupId>com.github.overz</groupId>
 		<artifactId>spring-camel-kafka</artifactId>
 		<version>0.0.1</version>
-		<relativePath/>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
-
-	<properties>
-		<cxf-codegen-plugin.path>${wsdl.path}/test.wsdl</cxf-codegen-plugin.path>
-	</properties>
 
 	<artifactId>order</artifactId>
 	<version>0.0.1</version>
 	<name>${project.artifactId}</name>
 	<description>order</description>
+
+	<properties>
+		<cxf-codegen-plugin.path>${wsdl.path}/test.wsdl</cxf-codegen-plugin.path>
+	</properties>
 
 	<build>
 		<plugins>

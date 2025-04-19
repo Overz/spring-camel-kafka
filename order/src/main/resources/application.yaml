@@ -38,7 +38,7 @@ spring:
     serialization:
       write-dates-as-timestamps: false
   jpa:
-    database-platform: "${DATABASE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}"
+#    database-platform: "${DATABASE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}"
     properties:
       hibernate:
         dialect: "${spring.jpa.database-platform}"
@@ -54,7 +54,7 @@ spring:
       auto-commit: "${HIKARI_AUTO_COMMIT:true}"
       max-lifetime: "${HIKARI_MAX_LIFETIME:3600000}"
   kafka:
-    client-id: "${spring.application.name}"
+    client-id: "${spring.application.name}-${random.uuid}"
     bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:19092,localhost:29092}"
     producer:
       acks: "all"

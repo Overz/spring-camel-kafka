@@ -37,12 +37,6 @@ spring:
       fail-on-unknown-properties: false
     serialization:
       write-dates-as-timestamps: false
-  jpa:
-#    database-platform: "${DATABASE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}"
-    properties:
-      hibernate:
-        dialect: "${spring.jpa.database-platform}"
-        format_sql: "true"
   datasource:
     url: "${DATABASE_URL:jdbc:postgresql://localhost:5432/postgres}"
     username: "${DATABASE_USERNAME:postgres}"
@@ -54,13 +48,13 @@ spring:
       auto-commit: "${HIKARI_AUTO_COMMIT:true}"
       max-lifetime: "${HIKARI_MAX_LIFETIME:3600000}"
   kafka:
-    client-id: "${spring.application.name}-${random.uuid}"
-    bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:19092,localhost:29092}"
-    producer:
-      acks: "all"
-      retries: "3"
-      key-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
-      value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+#    client-id: "${spring.application.name}-${random.uuid}"
+#    bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:19092,localhost:29092}"
+#    producer:
+#      acks: "all"
+#      retries: "3"
+#      key-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+#      value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
 
 # https://camel.apache.org/components/4.10.x/cxf-component.html
 cxf:
@@ -78,6 +72,14 @@ camel:
     jackson:
       pretty-print: true
       auto-discover-object-mapper: true
+  component:
+    kafka:
+      brokers: "${KAFKA_BROKERS:localhost:19092,localhost:29092}"
+      client-id: "${spring.application.name}-${random.uuid}"
+      request-required-acks: "all"
+      retries: "3"
+      key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+      value-serializer: "org.apache.kafka.common.serialization.StringSerializer"
 
 management:
   server:
@@ -103,3 +105,7 @@ resilience4j:
         retry-exceptions:
           - org.springframework.web.client.RestClientException
           - java.net.SocketTimeoutException
+
+app:
+  endpoints:
+    test-service: "${TEST_SERVICE_ENDPOINT:/TestService}"

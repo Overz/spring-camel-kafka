@@ -1,17 +1,21 @@
 package com.github.overz.routes;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.overz.configs.ApplicationProperties;
 import com.github.overz.errors.SoapBadRequestException;
-import com.github.overz.errors.SoapBadRequestExceptionProcessor;
-import com.github.overz.errors.SoapInternalServerException;
-import com.github.overz.errors.SoapInternalServerExceptionProcessor;
-import com.github.overz.processors.GetSoapPayloadRequestBody;
+import com.github.overz.processors.SoapBadRequestExceptionProcessor;
+import com.github.overz.processors.SoapInternalServerExceptionProcessor;
+import com.github.overz.errors.StreamingMessageEception;
+import com.github.overz.models.Order;
+import com.github.overz.processors.CreateOrderProcessor;
+import com.github.overz.processors.GetSoapPayloadFromRequestBody;
 import com.github.overz.processors.TestResponseProcessor;
+import com.github.overz.repositories.OrderRepository;
+import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.builder.PredicateBuilder;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.dataformat.JsonDataFormat;
-import org.apache.camel.model.dataformat.JsonLibrary;
+import org.apache.camel.component.kafka.KafkaConstants;
 
 import javax.xml.parsers.DocumentBuilder;
 
@@ -21,8 +25,13 @@ import static com.github.overz.configs.WebServiceConfig.SOAP_ENTPOINT_BEAN;
 @RequiredArgsConstructor
 public class TestRouter extends RouteBuilder {
 	private static final String SOAP_TEST_ENTRYPOINT = "cxf:bean:" + SOAP_ENTPOINT_BEAN;
+
+	public static final String SEND_TO_KAFKA = "direct:send-do-kafka";
+	public static final String SAVE_ORDER = "direct:save-order";
+
+	private final ApplicationProperties properties;
 	private final DocumentBuilder documentBuilder;
-	private final ObjectMapper objectMapper;
+	private final OrderRepository orderRepository;
 
 	@Override
 	public void configure() throws Exception {
@@ -32,18 +41,62 @@ public class TestRouter extends RouteBuilder {
 			.end()
 		;
 
-		onException(SoapInternalServerException.class)
+		onException(Exception.class)
 			.handled(true)
 			.process(new SoapInternalServerExceptionProcessor())
 			.end()
 		;
 
+		final var testTopic = Routes.k(properties.getTopics().getOrder());
+
 		from(SOAP_TEST_ENTRYPOINT)
 			.id("test-service")
-			.process(new GetSoapPayloadRequestBody())
-			.marshal(new JsonDataFormat(JsonLibrary.Jackson))
-			.to("kafka:teste")
+			.description("process the request example, save in database '" + Order.TABLE + "' then send to kafka broker's in with topic '" + properties.getTopics().getOrder() + "'")
+			.log("Processing request '${id}'")
+			.process(new GetSoapPayloadFromRequestBody())
+			.to(SAVE_ORDER)
+			.marshal().json()
+			.to(SEND_TO_KAFKA)
+			.log("Creating response body from request id '${id}'")
 			.process(new TestResponseProcessor())
+			.end()
+		;
+
+		from(SAVE_ORDER)
+			.id("save-order")
+			.log("Creating order from request body, request-id: '${id}'")
+			.marshal().json()
+			.process(new CreateOrderProcessor())
+			.log("Saving order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
+			.bean(orderRepository, "save")
+			.log("Saved order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
+			.marshal().json()
+			.setProperty(Routes.TO_KAFKA_VALUE, simple("${body}"))
+			.setProperty(Routes.TO_KAFKA_KEY, simple("${id}"))
+			.end()
+		;
+
+		final var validateKafkaContent = PredicateBuilder.and(
+			exchangeProperty(Routes.TO_KAFKA_VALUE).isNull(),
+			exchangeProperty(Routes.TO_KAFKA_KEY).isNull()
+		);
+
+		from(SEND_TO_KAFKA)
+			.id("send-do-kafka")
+			.log("Sending to kafka broker '" + testTopic + "', request-id: '${id}'")
+			// @formatter:off
+			.choice()
+				.when(validateKafkaContent)
+					.throwException(new StreamingMessageEception("Property '" + Routes.TO_KAFKA_VALUE + "' is null"))
+				.otherwise()
+					.setBody(exchangeProperty(Routes.TO_KAFKA_VALUE))
+					.removeHeaders("*")
+					.setHeader(KafkaConstants.KEY, exchangeProperty(Routes.TO_KAFKA_KEY))
+					.setHeader(KafkaConstants.PARTITION_KEY, constant("0"))
+			.endChoice()
+			// @formatter:on
+			.log("Sentind to kafka, topic: '" + testTopic + "', key '" + Routes.exP(Routes.TO_KAFKA_KEY) + "', value: '" + Routes.exP(Routes.TO_KAFKA_VALUE) + "'")
+			.to(testTopic)
 			.end()
 		;
 	}

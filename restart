@@ -1,0 +1,13 @@
+#!/bin/bash
+
+docker compose down
+
+VOLUMES=(
+	"kafka-kafka"
+	"kafka-postgres"
+	"kafka-mailhog"
+)
+
+docker volume rm "${VOLUMES[@]}"
+
+docker compose up -d

@@ -7,15 +7,11 @@ import org.springframework.http.HttpStatus;
 import javax.xml.namespace.QName;
 
 @Getter
-public class SoapInternalServerException extends ApplicationSoapError {
+public class StreamingMessageEception extends ApplicationSoapError {
 	private final QName fc = Fault.FAULT_CODE_SERVER;
 	private final HttpStatus code = HttpStatus.INTERNAL_SERVER_ERROR;
 
-	public SoapInternalServerException() {
-		this("Internal Server Error", null);
-	}
-
-	private SoapInternalServerException(String message, Throwable cause) {
-		super(message, cause);
+	public StreamingMessageEception(String message) {
+		super(message);
 	}
 }

@@ -40,6 +40,13 @@
 		<spring.version>3.4.3</spring.version>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -112,6 +119,11 @@
 		<dependency>
 			<groupId>com.sun.xml.messaging.saaj</groupId>
 			<artifactId>saaj-impl</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.wosherco</groupId>
+			<artifactId>jnanoid-enhanced</artifactId>
+			<version>297545f083</version>
 		</dependency>
 
 		<!-- CXF -->
@@ -263,6 +275,7 @@
 											<extraarg>-autoNameResolution</extraarg>
 											<extraarg>-all</extraarg>
 											<extraarg>-mark-generated</extraarg>
+											<extraarg>-bareMethods=false</extraarg>
 										</extraargs>
 									</wsdlOption>
 								</wsdlOptions>

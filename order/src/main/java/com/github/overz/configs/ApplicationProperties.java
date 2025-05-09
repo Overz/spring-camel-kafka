@@ -14,7 +14,9 @@ import java.io.Serializable;
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class ApplicationProperties implements Serializable {
-	public Endpoints endpoints;
+	private Endpoints endpoints;
+	private Topics topics;
+
 
 	@Getter
 	@Setter
@@ -22,6 +24,15 @@ public class ApplicationProperties implements Serializable {
 	@AllArgsConstructor
 	@NoArgsConstructor
 	public static class Endpoints implements Serializable {
-		public String testService;
+		private String testService;
+	}
+
+	@Getter
+	@Setter
+	@Builder
+	@AllArgsConstructor
+	@NoArgsConstructor
+	public static class Topics implements Serializable {
+		private String order;
 	}
 }

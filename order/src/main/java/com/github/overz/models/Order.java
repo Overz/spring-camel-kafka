@@ -10,6 +10,7 @@ import java.time.OffsetDateTime;
 
 @Getter
 @Setter
+@ToString
 @Builder
 @EqualsAndHashCode
 @NoArgsConstructor
@@ -22,8 +23,7 @@ public class Order implements Serializable {
 
 	@Id
 	@Column(name = Fields.cdOrder, nullable = false)
-	@Builder.Default
-	private String cdOrder = NanoIdUtils.randomNanoId();
+	private String cdOrder;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = Fields.flStatus, nullable = false)
@@ -43,7 +43,10 @@ public class Order implements Serializable {
 	@PrePersist
 	public void prePersist() {
 		switch (this.flStatus) {
-			case NEW -> this.dtUpdatedAt = null;
+			case NEW -> {
+				this.cdOrder = NanoIdUtils.randomNanoId();
+				this.dtUpdatedAt = null;
+			}
 			case PROCESSING, COMPLETED -> this.dtUpdatedAt = OffsetDateTime.now();
 		}
 	}

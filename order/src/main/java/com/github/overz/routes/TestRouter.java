@@ -2,17 +2,14 @@ package com.github.overz.routes;
 
 import com.github.overz.configs.ApplicationProperties;
 import com.github.overz.errors.SoapBadRequestException;
-import com.github.overz.processors.SoapBadRequestExceptionProcessor;
-import com.github.overz.processors.SoapInternalServerExceptionProcessor;
 import com.github.overz.errors.StreamingMessageEception;
 import com.github.overz.models.Order;
-import com.github.overz.processors.CreateOrderProcessor;
-import com.github.overz.processors.GetSoapPayloadFromRequestBody;
-import com.github.overz.processors.TestResponseProcessor;
+import com.github.overz.processors.*;
 import com.github.overz.repositories.OrderRepository;
 import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.builder.AggregationStrategies;
 import org.apache.camel.builder.PredicateBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.kafka.KafkaConstants;
@@ -55,22 +52,28 @@ public class TestRouter extends RouteBuilder {
 			.log("Processing request '${id}'")
 			.process(new GetSoapPayloadFromRequestBody())
 			.to(SAVE_ORDER)
-			.marshal().json()
-			.to(SEND_TO_KAFKA)
+			// @formatter:off
+			.multicast(AggregationStrategies.useOriginal())
+				.parallelProcessing()
+				.to(SEND_TO_KAFKA)
+			.end()
+			// @formatter:on
 			.log("Creating response body from request id '${id}'")
 			.process(new TestResponseProcessor())
+			.log("Response body '${body}' for request id '${id}'")
 			.end()
 		;
 
 		from(SAVE_ORDER)
 			.id("save-order")
-			.log("Creating order from request body, request-id: '${id}'")
+			.log("Creating order from request body, request-id: '${id}', body: '${body}'")
 			.marshal().json()
 			.process(new CreateOrderProcessor())
 			.log("Saving order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
 			.bean(orderRepository, "save")
 			.log("Saved order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
 			.marshal().json()
+			.log("Marshalled order '" + Routes.exP(Routes.ORDER) + "' to json format: '${body}'")
 			.setProperty(Routes.TO_KAFKA_VALUE, simple("${body}"))
 			.setProperty(Routes.TO_KAFKA_KEY, simple("${id}"))
 			.end()
@@ -83,7 +86,7 @@ public class TestRouter extends RouteBuilder {
 
 		from(SEND_TO_KAFKA)
 			.id("send-do-kafka")
-			.log("Sending to kafka broker '" + testTopic + "', request-id: '${id}'")
+			.log("Sending to kafka broker '" + testTopic + "', request-id: '${id}', body: '${body}'")
 			// @formatter:off
 			.choice()
 				.when(validateKafkaContent)

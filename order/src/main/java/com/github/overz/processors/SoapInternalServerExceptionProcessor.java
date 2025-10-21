@@ -21,6 +21,6 @@ public record SoapInternalServerExceptionProcessor() implements Processor {
 			fault.setMessage("Internal Server Error");
 		}
 
-		throw fault;
+//		throw fault;
 	}
 }

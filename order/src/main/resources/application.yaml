@@ -51,6 +51,11 @@ spring:
     hibernate:
       naming:
         physical-strategy: "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"
+  kafka:
+    bootstrap-servers: "${KAFKA_BROKERS:localhost:19092,localhost:29092}"
+    producer:
+      key-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+      value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
 
 # https://camel.apache.org/components/4.10.x/cxf-component.html
 cxf:
@@ -106,4 +111,4 @@ app:
   endpoints:
     test-service: "${TEST_SERVICE_ENDPOINT:/TestService}"
   topics:
-    order: "${ORDER_TOPIC:test}"
+    order: "${TOPIC_ORDER:test}"

@@ -15,6 +15,9 @@ spring:
   devtools:
     livereload:
       enabled: "true"
+  output:
+    ansi:
+      enabled: always
 
 logging:
   level:

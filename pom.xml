@@ -36,7 +36,6 @@
 		<camel.cxf.version>3.17.0</camel.cxf.version>
 		<cxf.version>4.1.1</cxf.version>
 		<junit.version>5.12.1</junit.version>
-		<dotenv.version>5.2.2</dotenv.version>
 		<spring.version>3.4.3</spring.version>
 	</properties>
 
@@ -91,11 +90,6 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.github.cdimascio</groupId>
-			<artifactId>java-dotenv</artifactId>
-			<version>${dotenv.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>

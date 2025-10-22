@@ -1,7 +1,7 @@
 debug: "${DEBUG:false}"
 
 server:
-  port: "${APP_PORT:3000}"
+  port: "${APP_PORT:3001}"
   address: "${APP_ADDRESS:0.0.0.0}"
   shutdown: "graceful"
   servlet:
@@ -47,9 +47,6 @@ spring:
       minimum-idle: "${HIKARI_MINIMUM_IDLE:2}"
       auto-commit: "${HIKARI_AUTO_COMMIT:true}"
       max-lifetime: "${HIKARI_MAX_LIFETIME:3600000}"
-#  mvc:
-#    problemdetails:
-#      enabled: true
 
 management:
   server:

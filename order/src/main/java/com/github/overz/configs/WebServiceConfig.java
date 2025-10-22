@@ -56,7 +56,7 @@ public class WebServiceConfig {
 
 	@Bean
 	public DocumentBuilder documentBuilder() throws ParserConfigurationException {
-		return DocumentBuilderFactory.newInstance().newDocumentBuilder();
+		return DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder();
 	}
 
 	@Bean(SOAP_ENTPOINT_BEAN)

@@ -67,8 +67,13 @@ camel:
     mapping:
       context-path: "/*"
   rest:
-    context-path: "/*"
+    context-path: "/"
     component: "servlet"
+    client-request-validation: true
+    binding-mode: auto
+    api-property:
+      title: "@project.artifactId@"
+      version: "@project.version@"
   dataformat:
     jackson:
       pretty-print: true

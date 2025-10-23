@@ -1,32 +1,39 @@
 package com.github.overz.routes;
 
-import com.github.overz.TestResponse;
 import com.github.overz.configs.ApplicationProperties;
-import com.github.overz.dtos.TestRestResponse;
+import com.github.overz.dtos.NotificationResponse;
+import com.github.overz.dtos.OrderRequest;
+import com.github.overz.dtos.OrderResponse;
 import com.github.overz.errors.SoapBadRequestException;
 import com.github.overz.errors.StreamingMessageException;
 import com.github.overz.models.Order;
 import com.github.overz.processors.*;
 import com.github.overz.repositories.OrderRepository;
+import com.github.overz.utils.RouteFileDefinition;
 import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.Exchange;
 import org.apache.camel.builder.AggregationStrategies;
 import org.apache.camel.builder.PredicateBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.kafka.KafkaConstants;
 
+import java.time.Duration;
+import java.util.regex.Pattern;
+
 import static com.github.overz.configs.WebServiceConfig.SOAP_ENTPOINT_BEAN;
 
 @Slf4j
 @RequiredArgsConstructor
-public class TestRouter extends RouteBuilder {
+public class OrderRouter extends RouteBuilder {
 	private static final String SOAP_TEST_ENTRYPOINT = "cxf:bean:" + SOAP_ENTPOINT_BEAN;
 	private static final String REST_TEST_ENDPOINT = "direct:rest-test-endpoint";
 
 	private static final String SEND_TO_KAFKA = "direct:send-do-kafka";
 	private static final String SAVE_ORDER = "direct:save-order";
 	private static final String SAVE_AND_PUBLISH = "direct:save-and-publish";
+	private static final String WAIT_FOR_CONFIRMATION = "direct:wait-for-confirmation";
 
 	private final ApplicationProperties properties;
 	private final OrderRepository orderRepository;
@@ -53,8 +60,8 @@ public class TestRouter extends RouteBuilder {
 				.description("Test the endpoint")
 				.consumes("application/json")
 				.produces("application/json")
-				.type(Object.class)
-				.outType(TestResponse.class)
+				.type(OrderRequest.class)
+				.outType(OrderResponse.class)
 				.to(REST_TEST_ENDPOINT)
 		// @formatter:on
 		;
@@ -63,9 +70,11 @@ public class TestRouter extends RouteBuilder {
 			.id("redirect-get-test")
 			.setProperty(Routes.REQUEST_TYPE, simple("rest"))
 			.setProperty(Routes.REST_REQUEST_BODY, simple("${body}"))
+			.setProperty(Routes.REQUEST_CONTENT_ID, simple("${body.id}"))
 			.to(SAVE_AND_PUBLISH)
 			.process(exchange -> {
-				final var body = new TestRestResponse("ok");
+				final var notice = exchange.getIn().getBody(NotificationResponse.class);
+				final var body = new OrderResponse(notice.id());
 				exchange.getIn().setBody(body);
 			})
 			.end()
@@ -84,15 +93,46 @@ public class TestRouter extends RouteBuilder {
 			.end()
 		;
 
+		final var inputFileDefinition = RouteFileDefinition.builder()
+			.input(properties.getFiles().getInputTestFiles().getFile().getPath())
+			.include(Pattern.compile(".*\\.json$"))
+			.noop()
+			.idempotent()
+			.idempotentKey("${file:name}-${file:modified}")
+			.delay(Duration.ofMillis(5L))
+			.maxMessagePerPoll(10);
+
+		final var outputFileDefinition = RouteFileDefinition.builder()
+			.output(properties.getFiles().getOutputTestFiles().getFile().getPath())
+			.fileName("${file:name.noext}_done.${file:ext}")
+			.fileExist(RouteFileDefinition.FileExist.OVERRIDE);
+
+		from(inputFileDefinition.build())
+			.id("test-files")
+			.log("Processing file '${header.CamelFileName}'")
+			.unmarshal().json()
+			// @formatter:off
+				.split(body())
+				.parallelProcessing()
+				.streaming()
+				.aggregationStrategy(AggregationStrategies.useOriginal())
+				.log("Processing content '${body}'")
+				.to(SAVE_AND_PUBLISH)
+			// @formatter:on
+			.end()
+			.marshal().json()
+			.log("Writing file '${file:name.noext}_done.${file:ext}': '${body}'")
+			.to(outputFileDefinition.build())
+			.end()
+		;
+
 		from(SAVE_AND_PUBLISH)
 			.id("save-and-publish")
 			.to(SAVE_ORDER)
-			// @formatter:off
-			.multicast(AggregationStrategies.useOriginal())
-			.parallelProcessing()
+			.threads(10)
 			.to(SEND_TO_KAFKA)
+			.to(WAIT_FOR_CONFIRMATION)
 			.end()
-		// @formatter:on
 		;
 
 		from(SAVE_ORDER)
@@ -105,14 +145,14 @@ public class TestRouter extends RouteBuilder {
 			.log("Saved order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
 			.marshal().json()
 			.log("Marshalled order '" + Routes.exP(Routes.ORDER) + "' to json format: '${body}'")
-			.setProperty(Routes.TO_KAFKA_VALUE, simple("${body}"))
-			.setProperty(Routes.TO_KAFKA_KEY, simple("${id}"))
+			.setProperty(Routes.KAFKA_VALUE, simple("${body}"))
+			.setProperty(Routes.KAFKA_KEY, simple("${id}"))
 			.end()
 		;
 
 		final var validateKafkaContent = PredicateBuilder.and(
-			exchangeProperty(Routes.TO_KAFKA_VALUE).isNull(),
-			exchangeProperty(Routes.TO_KAFKA_KEY).isNull()
+			exchangeProperty(Routes.KAFKA_VALUE).isNull(),
+			exchangeProperty(Routes.KAFKA_KEY).isNull()
 		);
 
 		final var testTopic = Routes.k(properties.getTopics().getOrder());
@@ -122,17 +162,31 @@ public class TestRouter extends RouteBuilder {
 			// @formatter:off
 			.choice()
 				.when(validateKafkaContent)
-					.throwException(new StreamingMessageException("Property '" + Routes.TO_KAFKA_VALUE + "' is null"))
+					.throwException(new StreamingMessageException(
+						"Property '" + Routes.KAFKA_VALUE + "' or '" + Routes.KAFKA_KEY + "' is null"
+					))
 				.otherwise()
-					.setBody(exchangeProperty(Routes.TO_KAFKA_VALUE))
+					.setBody(exchangeProperty(Routes.KAFKA_VALUE))
 					.removeHeaders("*")
-					.setHeader(KafkaConstants.KEY, exchangeProperty(Routes.TO_KAFKA_KEY))
+					.setHeader(KafkaConstants.KEY, exchangeProperty(Routes.KAFKA_KEY))
 					.setHeader(KafkaConstants.PARTITION_KEY, constant("0"))
 			.endChoice()
 			// @formatter:on
-			.log("Sentind to kafka, topic: '" + testTopic + "', key '" + Routes.exP(Routes.TO_KAFKA_KEY) + "', value: '" + Routes.exP(Routes.TO_KAFKA_VALUE) + "'")
+			.log("Sending to kafka, topic: '" + testTopic + "', key '" + Routes.exP(Routes.KAFKA_KEY) + "', value: '" + Routes.exP(Routes.KAFKA_VALUE) + "'")
 			.to(testTopic)
 			.end()
+		;
+
+		final var services = properties.getServices();
+		final var notificationService = services.getNotification();
+		final var confirmNotificationEndpoint = notificationService.confirmation(Routes.exP(Routes.REQUEST_CONTENT_ID));
+		from(WAIT_FOR_CONFIRMATION)
+			.id("wait-for-confirmation")
+			.log("Waiting the confirmation of notification")
+			.setHeader(Exchange.HTTP_METHOD, constant("GET"))
+			.toD(confirmNotificationEndpoint)
+			.unmarshal().json(NotificationResponse.class)
+			.removeHeaders("*")
 		;
 	}
 }

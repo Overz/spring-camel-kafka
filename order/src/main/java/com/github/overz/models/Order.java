@@ -12,7 +12,6 @@ import java.time.OffsetDateTime;
 @Setter
 @ToString
 @Builder
-@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants

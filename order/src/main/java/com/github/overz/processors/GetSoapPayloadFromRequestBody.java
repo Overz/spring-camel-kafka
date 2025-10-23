@@ -1,5 +1,6 @@
 package com.github.overz.processors;
 
+import com.github.overz.TestRequest;
 import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +15,9 @@ public class GetSoapPayloadFromRequestBody implements Processor {
 	@Override
 	public void process(Exchange exchange) throws Exception {
 		final var data = exchange.getIn().getBody(MessageContentsList.class);
-		final var body = data.getFirst();
+		final var body = (TestRequest) data.getFirst();
 		exchange.getIn().setBody(body);
 		exchange.setProperty(Routes.SOAP_REQUEST_BODY, body);
+		exchange.setProperty(Routes.REQUEST_CONTENT_ID, body.getTestId());
 	}
 }

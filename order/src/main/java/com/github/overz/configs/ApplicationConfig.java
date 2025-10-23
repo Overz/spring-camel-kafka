@@ -1,7 +1,5 @@
 package com.github.overz.configs;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.overz.mappers.JsonMapper;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +15,5 @@ public class ApplicationConfig {
 	@ConditionalOnMissingBean(ValidatorFactory.class)
 	public ValidatorFactory validator() {
 		return Validation.buildDefaultValidatorFactory();
-	}
-
-	@Bean
-	public JsonMapper jsonMapper(
-		final ObjectMapper objectMapper
-	) {
-		return new JsonMapper(objectMapper);
 	}
 }

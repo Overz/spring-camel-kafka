@@ -1,7 +1,8 @@
 .env*
 !.env.example
 tmp
-
+*/test-files/output/*.*
+!.gitkeep
 *.log
 
 .idea

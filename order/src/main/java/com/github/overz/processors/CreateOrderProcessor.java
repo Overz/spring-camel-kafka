@@ -11,7 +11,7 @@ import org.apache.camel.Processor;
 @RequiredArgsConstructor
 public class CreateOrderProcessor implements Processor {
 	@Override
-	public void process(Exchange exchange) throws Exception {
+	public void process(final Exchange exchange) throws Exception {
 		final var order = Order.builder().data(exchange.getIn().getBody(String.class)).build();
 		exchange.getIn().setBody(order);
 		exchange.setProperty(Routes.ORDER, order);

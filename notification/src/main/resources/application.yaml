@@ -38,19 +38,53 @@ spring:
     serialization:
       write-dates-as-timestamps: false
   datasource:
-    url: "${DATABASE_URL}"
-    username: "${DATABASE_USERNAME}"
-    password: "${DABASE_PASSWORD}"
-    driver-class-name: "${DATABASE_DRIVER}"
+    url: "${DATABASE_URL:jdbc:postgresql://localhost:5432/postgres}"
+    username: "${DATABASE_USERNAME:postgres}"
+    password: "${DATABASE_PASSWORD:postgres}"
+    driver-class-name: "${DATABASE_DRIVER:org.postgresql.Driver}"
     hikari:
       maximum-pool-size: "${HIKARI_MAXIMUM_POOL_SIZE:10}"
       minimum-idle: "${HIKARI_MINIMUM_IDLE:2}"
       auto-commit: "${HIKARI_AUTO_COMMIT:true}"
       max-lifetime: "${HIKARI_MAX_LIFETIME:3600000}"
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"
+  kafka:
+    bootstrap-servers: "${KAFKA_BROKERS:localhost:19092,localhost:29092}"
+    producer:
+      key-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+      value-serializer: "org.apache.kafka.common.serialization.ByteArraySerializer"
+
+camel:
+  servlet:
+    mapping:
+      context-path: "/*"
+  rest:
+    context-path: "/"
+    component: "servlet"
+    client-request-validation: true
+    binding-mode: auto
+    api-property:
+      title: "@project.artifactId@"
+      version: "@project.version@"
+  dataformat:
+    jackson:
+      pretty-print: true
+      auto-discover-object-mapper: true
+  component:
+    kafka:
+      brokers: "${KAFKA_BROKERS:localhost:19092,localhost:29092}"
+      client-id: "${spring.application.name}-${random.uuid}"
+      request-required-acks: "all"
+      retries: "3"
+      key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+      value-serializer: "org.apache.kafka.common.serialization.StringSerializer"
 
 management:
   server:
-    port: "${APP_MANAGMENT_PORT:9090}"
+    port: "${APP_MANAGMENT_PORT:9091}"
   endpoints:
     access:
       default: read_only
@@ -72,3 +106,7 @@ resilience4j:
         retry-exceptions:
           - org.springframework.web.client.RestClientException
           - java.net.SocketTimeoutException
+
+app:
+  topics:
+    order: "${TOPIC_ORDER:test}"

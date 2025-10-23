@@ -34,6 +34,7 @@ public class OrderRouter extends RouteBuilder {
 	private static final String SAVE_ORDER = "direct:save-order";
 	private static final String SAVE_AND_PUBLISH = "direct:save-and-publish";
 	private static final String WAIT_FOR_CONFIRMATION = "direct:wait-for-confirmation";
+	private static final String ASYNC_SEND_AND_CONFIRM = "seda:async-send-and-confirm";
 
 	private final ApplicationProperties properties;
 	private final OrderRepository orderRepository;
@@ -72,10 +73,10 @@ public class OrderRouter extends RouteBuilder {
 			.setProperty(Routes.REST_REQUEST_BODY, simple("${body}"))
 			.setProperty(Routes.REQUEST_CONTENT_ID, simple("${body.id}"))
 			.to(SAVE_AND_PUBLISH)
+			// Respond immediately without waiting for async confirmation
 			.process(exchange -> {
-				final var notice = exchange.getIn().getBody(NotificationResponse.class);
-				final var body = new OrderResponse(notice.id());
-				exchange.getIn().setBody(body);
+				final var requestId = exchange.getProperty(Routes.REQUEST_CONTENT_ID, String.class);
+				exchange.getIn().setBody(new OrderResponse(requestId));
 			})
 			.end()
 		;
@@ -129,9 +130,8 @@ public class OrderRouter extends RouteBuilder {
 		from(SAVE_AND_PUBLISH)
 			.id("save-and-publish")
 			.to(SAVE_ORDER)
-			.threads(10)
-			.to(SEND_TO_KAFKA)
-			.to(WAIT_FOR_CONFIRMATION)
+			// Fire-and-forget: send to Kafka and confirmation asynchronously
+			.wireTap(ASYNC_SEND_AND_CONFIRM)
 			.end()
 		;
 
@@ -177,7 +177,7 @@ public class OrderRouter extends RouteBuilder {
 			.end()
 		;
 
-		final var services = properties.getServices();
+		final var services = properties.getApi();
 		final var notificationService = services.getNotification();
 		final var confirmNotificationEndpoint = notificationService.confirmation(Routes.exP(Routes.REQUEST_CONTENT_ID));
 		from(WAIT_FOR_CONFIRMATION)
@@ -187,6 +187,31 @@ public class OrderRouter extends RouteBuilder {
 			.toD(confirmNotificationEndpoint)
 			.unmarshal().json(NotificationResponse.class)
 			.removeHeaders("*")
+		;
+
+		// Asynchronous pipeline that sends to Kafka and retries confirmation for a specific period
+		from(ASYNC_SEND_AND_CONFIRM)
+			.id("async-send-and-confirm")
+			.log("[ASYNC] Starting async send and confirmation for request-id: '${id}'")
+			.to(SEND_TO_KAFKA)
+			.process(exchange -> {
+				final long now = System.currentTimeMillis();
+				final long retryUntil = now + 60_000L; // retry for up to 60 seconds
+				exchange.setProperty("confirm.retryUntil", retryUntil);
+				exchange.setProperty("confirm.ok", false);
+			})
+			.loopDoWhile(PredicateBuilder.and(
+				exchange -> exchange.getProperty("confirm.ok", boolean.class),
+				exchange -> exchange.getProperty("confirm.retryUntil", long.class) < System.currentTimeMillis()
+			))
+			.to(WAIT_FOR_CONFIRMATION)
+			.process(exchange -> {
+				final var notice = exchange.getIn().getBody(NotificationResponse.class);
+				exchange.setProperty("confirm.ok", Boolean.TRUE.equals(notice.ok()));
+			})
+			.delay(3000) // wait 3 seconds between attempts
+			.end()
+			.log("[ASYNC] Finished confirmation for request-id: '${id}', ok='${exchangeProperty.confirm.ok}'")
 		;
 	}
 }

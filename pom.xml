@@ -274,6 +274,8 @@
 											<extraarg>-all</extraarg>
 											<extraarg>-mark-generated</extraarg>
 											<extraarg>-bareMethods=false</extraarg>
+											<extraarg>-p</extraarg>
+											<extraarg>com.github.overz.generated</extraarg>
 										</extraargs>
 									</wsdlOption>
 								</wsdlOptions>

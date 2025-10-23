@@ -7,14 +7,14 @@
 
 	<types>
 		<xsd:schema targetNamespace="http://github.com/overz/">
-			<xsd:element name="testRequest">
+			<xsd:element name="orderRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="testId" type="xsd:string"/>
+						<xsd:element name="orderId" type="xsd:string"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="testResponse">
+			<xsd:element name="orderResponse">
 				<xsd:complexType>
 					<xsd:sequence>
 						<xsd:element name="result" type="xsd:string"/>
@@ -24,25 +24,25 @@
 		</xsd:schema>
 	</types>
 
-	<message name="TestRequestMessage">
-		<part name="parameters" element="tns:testRequest"/>
+	<message name="OrderRequestMessage">
+		<part name="parameters" element="tns:orderRequest"/>
 	</message>
 
-	<message name="TestResponseMessage">
-		<part name="parameters" element="tns:testResponse"/>
+	<message name="OrderResponseMessage">
+		<part name="parameters" element="tns:orderResponse"/>
 	</message>
 
-	<portType name="TestServicePortType">
-		<operation name="processTest">
-			<input message="tns:TestRequestMessage"/>
-			<output message="tns:TestResponseMessage"/>
+	<portType name="OrderServicePortType">
+		<operation name="processOrder">
+			<input message="tns:OrderRequestMessage"/>
+			<output message="tns:OrderResponseMessage"/>
 		</operation>
 	</portType>
 
 
-	<binding name="TestServiceBinding" type="tns:TestServicePortType">
+	<binding name="OrderServiceBinding" type="tns:OrderServicePortType">
 		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
-		<operation name="processTest">
+		<operation name="processOrder">
 			<soap:operation soapAction=""/>
 			<input>
 				<soap:body use="literal"/>
@@ -53,8 +53,8 @@
 		</operation>
 	</binding>
 
-	<service name="TestService">
-		<port name="TestServicePort" binding="tns:TestServiceBinding">
+	<service name="OrderService">
+		<port name="OrderServicePort" binding="tns:OrderServiceBinding">
 			<soap:address location="http://localhost:3000/TestService"/>
 		</port>
 	</service>

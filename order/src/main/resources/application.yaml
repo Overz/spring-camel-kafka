@@ -113,12 +113,14 @@ resilience4j:
           - java.net.SocketTimeoutException
 
 app:
-  endpoints:
+  services:
     test-service: "${TEST_SERVICE_ENDPOINT:/TestService}"
   topics:
     order: "${TOPIC_ORDER:test}"
   files:
     input-test-files: "file:${TEST_FILES_DIR:@project.basedir@/test-files/input}"
     output-test-files: "file:${TEST_FILES_DIR:@project.basedir@/test-files/output}"
-  services:
-    notification-service: "${NOTIFICATION_SERVICE_BASE_URL:http://localhost:3001/v1}"
+  api:
+    timeout: "60S"
+    notification:
+      base-url: "${NOTIFICATION_SERVICE_BASE_URL:http://localhost:3001/v1}"

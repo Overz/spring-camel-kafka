@@ -16,7 +16,7 @@
 	<description>order</description>
 
 	<properties>
-		<cxf-codegen-plugin.path>${wsdl.path}/test.wsdl</cxf-codegen-plugin.path>
+		<cxf-codegen-plugin.path>${wsdl.path}/order.wsdl</cxf-codegen-plugin.path>
 	</properties>
 
 	<build>

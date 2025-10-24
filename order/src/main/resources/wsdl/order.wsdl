@@ -11,7 +11,7 @@
 			<xsd:element name="orderRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="orderId" type="xsd:string"/>
+						<xsd:element name="id" type="xsd:string"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -29,7 +29,7 @@
 			<xsd:element name="getOrderRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="orderId" type="xsd:string"/>
+						<xsd:element name="id" type="xsd:string"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -38,8 +38,8 @@
 			<xsd:element name="getOrderResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="status" type="xsd:string"/>
-						<xsd:element name="createdAt" type="xsd:string" minOccurs="0"/>
+						<xsd:element name="id" type="xsd:string"/>
+						<xsd:element name="ok" type="xsd:boolean"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>

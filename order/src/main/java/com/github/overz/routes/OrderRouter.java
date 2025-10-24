@@ -7,6 +7,7 @@ import com.github.overz.dtos.OrderResponse;
 import com.github.overz.errors.SoapBadRequestException;
 import com.github.overz.errors.StreamingMessageException;
 import com.github.overz.generated.GetOrderRequest;
+import com.github.overz.generated.GetOrderResponse;
 import com.github.overz.models.Order;
 import com.github.overz.models.OrderStatus;
 import com.github.overz.processors.*;
@@ -149,10 +150,10 @@ public class OrderRouter extends RouteBuilder {
 			.process(new CreateOrderProcessor())
 			.log("Saving order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
 			.bean(orderRepository, "save")
+			.setProperty(Routes.ORDER, body())
 			.log("Saved order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
-			.marshal().json()
 			.log("Marshalled order '" + Routes.exP(Routes.ORDER) + "' to json format: '${body}'")
-			.setProperty(Routes.KAFKA_VALUE, simple("${body}"))
+			.setProperty(Routes.KAFKA_VALUE, simple("${body.id}"))
 			.setProperty(Routes.KAFKA_KEY, simple("${id}"))
 			.end()
 		;
@@ -167,6 +168,7 @@ public class OrderRouter extends RouteBuilder {
 				exchange.getIn().setBody(order);
 			})
 			.bean(orderRepository, "save")
+			.setProperty(Routes.ORDER, body())
 			.end()
 		;
 
@@ -207,6 +209,7 @@ public class OrderRouter extends RouteBuilder {
 			.toD(confirmNotificationEndpoint)
 			.unmarshal().json(NotificationResponse.class)
 			.removeHeaders("*")
+			.end()
 		;
 
 		from(WAIT_FOR_CONFIRMATION_SOAP_ROUTE)
@@ -215,11 +218,18 @@ public class OrderRouter extends RouteBuilder {
 			.process(exchange -> {
 				final var id = exchange.getProperty(Routes.REQUEST_CONTENT_ID, String.class);
 				final var body = new GetOrderRequest();
-				body.setOrderId(id);
+				body.setId(id);
 				exchange.getIn().setBody(body);
 			})
 			.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
 			.to(SOAP_ORDER_CLIENT)
+			.process(exchange -> {
+				final var response = exchange.getIn().getBody();
+				if (response instanceof GetOrderResponse r) {
+					exchange.getIn().setBody(new NotificationResponse(r.getId(), r.isOk()));
+					exchange.setProperty("confirmation.ok", true);
+				}
+			})
 		;
 
 		// Asynchronous pipeline that sends to Kafka and retries confirmation for a specific period
@@ -247,10 +257,6 @@ public class OrderRouter extends RouteBuilder {
 					.to(WAIT_FOR_CONFIRMATION_SOAP_ROUTE)
 			// @formatter:on
 			.endChoice()
-			.process(exchange -> {
-				final var notice = exchange.getIn().getBody(NotificationResponse.class);
-				exchange.setProperty("confirm.ok", Boolean.TRUE.equals(notice.ok()));
-			})
 			.delay(3000) // wait 3 seconds between attempts
 			.end()
 			.log("[ASYNC] Finished confirmation for request-id: '${id}', ok='${exchangeProperty.confirm.ok}'")

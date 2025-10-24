@@ -11,10 +11,14 @@ public class RoutesConfig {
 
 	@Bean
 	public OrderRouter orderRouter(
-		final ApplicationProperties properties
+		final ApplicationProperties properties,
+		final com.github.overz.services.NotificationService notificationService,
+		final com.github.overz.services.MailService mailService
 	) {
 		return new OrderRouter(
-			properties
+			properties,
+			notificationService,
+			mailService
 		);
 	}
 }

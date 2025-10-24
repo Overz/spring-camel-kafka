@@ -18,6 +18,6 @@ public class GetSoapPayloadFromRequestBody implements Processor {
 		final var body = (OrderRequest) data.getFirst();
 		exchange.getIn().setBody(body);
 		exchange.setProperty(Routes.SOAP_REQUEST_BODY, body);
-		exchange.setProperty(Routes.REQUEST_CONTENT_ID, body.getOrderId());
+		exchange.setProperty(Routes.REQUEST_CONTENT_ID, body.getId());
 	}
 }

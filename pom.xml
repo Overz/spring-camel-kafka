@@ -269,13 +269,12 @@
 									<wsdlOption>
 										<!--suppress UnresolvedMavenProperty -->
 										<wsdl>${cxf-codegen-plugin.path}</wsdl>
+										<packagenames>com.github.overz.generated</packagenames>
 										<extraargs>
 											<extraarg>-autoNameResolution</extraarg>
 											<extraarg>-all</extraarg>
 											<extraarg>-mark-generated</extraarg>
 											<extraarg>-bareMethods=false</extraarg>
-											<extraarg>-p</extraarg>
-											<extraarg>com.github.overz.generated</extraarg>
 										</extraargs>
 									</wsdlOption>
 								</wsdlOptions>

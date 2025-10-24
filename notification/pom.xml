@@ -15,8 +15,16 @@
 	<name>${project.artifactId}</name>
 	<description>notification</description>
 
+	<properties>
+		<cxf-codegen-plugin.path>${wsdl.path}/order.wsdl</cxf-codegen-plugin.path>
+	</properties>
+
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-codegen-plugin</artifactId>
+			</plugin>
 			<plugin>
 				<groupId>org.graalvm.buildtools</groupId>
 				<artifactId>native-maven-plugin</artifactId>

@@ -26,7 +26,8 @@ import java.util.Map;
 
 @Configuration
 public class WebServiceConfig {
-	public static final String SOAP_ENTPOINT_BEAN = "soap-test-endpoint-bean";
+	public static final String ORDER_CXF_SERVICE = "order-cxf-service";
+	public static final String ORDER_CXF_CLIENT = "order-cxf-client";
 
 	private static final Map<String, SchemaValidationType> validationSchemas = Collections.synchronizedMap(Map.of(
 		"processTest", SchemaValidationType.BOTH
@@ -59,26 +60,39 @@ public class WebServiceConfig {
 		return DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder();
 	}
 
-	@Bean(SOAP_ENTPOINT_BEAN)
-	public CxfEndpoint testServiceEndpoint(
+	@Bean
+	public CxfEndpoint baseOrderCxfEndpoint(
 		final Bus bus,
 		final ApplicationProperties properties,
-		@Value("classpath:wsdl/order.wsdl") Resource resource,
-		@Qualifier("requiredBodyInterceptor") final AbstractSoapInterceptor requiredBodyInterceptor
+		@Value("classpath:wsdl/order.wsdl") Resource resource
 	) throws IOException {
 		final var endpoint = new CxfEndpoint();
 
 		endpoint.setWsdlURL(resource.getURL().toString());
 		endpoint.setAddress(properties.getServices().getTestService());
 		endpoint.setServiceClass(OrderServicePortType.class);
-
-		endpoint.setInInterceptors(Arrays.asList(
-			requiredBodyInterceptor
-		));
-
 		endpoint.setBus(bus);
 		endpoint.setDataFormat(DataFormat.POJO);
 		endpoint.setLoggingFeatureEnabled(true);
 		return endpoint;
+	}
+
+	@Bean(ORDER_CXF_SERVICE)
+	public CxfEndpoint orderCxfService(
+		@Qualifier("baseOrderCxfEndpoint") final CxfEndpoint baseOrderCxfEndpoint,
+		@Qualifier("requiredBodyInterceptor") final AbstractSoapInterceptor requiredBodyInterceptor
+	) {
+		final var endpoint = baseOrderCxfEndpoint.copy();
+		endpoint.setInInterceptors(Arrays.asList(
+			requiredBodyInterceptor
+		));
+		return endpoint;
+	}
+
+	@Bean(ORDER_CXF_CLIENT)
+	public CxfEndpoint orderCxfClient(
+		@Qualifier("baseOrderCxfEndpoint") final CxfEndpoint baseOrderCxfEndpoint
+	) {
+		return baseOrderCxfEndpoint.copy();
 	}
 }

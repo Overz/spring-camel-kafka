@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RoutesConfig {
 	@Bean
-	public OrderRouter testRouter(
+	public OrderRouter orderRouter(
 		final ApplicationProperties properties,
 		final OrderRepository orderRepository
 	) {

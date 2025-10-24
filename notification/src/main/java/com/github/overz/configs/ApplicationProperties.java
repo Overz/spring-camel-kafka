@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
 import java.io.Serializable;
+import java.time.Duration;
 
 @Getter
 @Setter
@@ -15,10 +16,10 @@ import java.io.Serializable;
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class ApplicationProperties implements Serializable {
-	private Endpoints endpoints;
+	private Services services;
 	private Topics topics;
 	private Files files;
-	private Services services;
+	private Api api;
 
 
 	@Getter
@@ -26,7 +27,7 @@ public class ApplicationProperties implements Serializable {
 	@Builder
 	@AllArgsConstructor
 	@NoArgsConstructor
-	public static class Endpoints implements Serializable {
+	public static class Services implements Serializable {
 		private String testService;
 	}
 
@@ -54,7 +55,8 @@ public class ApplicationProperties implements Serializable {
 	@Builder
 	@AllArgsConstructor
 	@NoArgsConstructor
-	public static class Services implements Serializable {
+	public static class Api implements Serializable {
+		private Duration timeout;
 		private NotificationService notification;
 
 
@@ -65,6 +67,7 @@ public class ApplicationProperties implements Serializable {
 		@NoArgsConstructor
 		public static class NotificationService implements Serializable {
 			private String baseUrl;
+
 			public String confirmation(final String id) {
 				return String.format("%s/confirmation?id=%s", getBaseUrl(), id);
 			}

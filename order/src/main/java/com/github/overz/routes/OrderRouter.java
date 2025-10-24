@@ -6,7 +6,9 @@ import com.github.overz.dtos.OrderRequest;
 import com.github.overz.dtos.OrderResponse;
 import com.github.overz.errors.SoapBadRequestException;
 import com.github.overz.errors.StreamingMessageException;
+import com.github.overz.generated.GetOrderRequest;
 import com.github.overz.models.Order;
+import com.github.overz.models.OrderStatus;
 import com.github.overz.processors.*;
 import com.github.overz.repositories.OrderRepository;
 import com.github.overz.utils.RouteFileDefinition;
@@ -17,24 +19,29 @@ import org.apache.camel.Exchange;
 import org.apache.camel.builder.AggregationStrategies;
 import org.apache.camel.builder.PredicateBuilder;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.cxf.common.message.CxfConstants;
 import org.apache.camel.component.kafka.KafkaConstants;
 
 import java.time.Duration;
 import java.util.regex.Pattern;
 
-import static com.github.overz.configs.WebServiceConfig.SOAP_ENTPOINT_BEAN;
+import static com.github.overz.configs.WebServiceConfig.ORDER_CXF_CLIENT;
+import static com.github.overz.configs.WebServiceConfig.ORDER_CXF_SERVICE;
 
 @Slf4j
 @RequiredArgsConstructor
 public class OrderRouter extends RouteBuilder {
-	private static final String SOAP_TEST_ENTRYPOINT = "cxf:bean:" + SOAP_ENTPOINT_BEAN;
-	private static final String REST_TEST_ENDPOINT = "direct:rest-test-endpoint";
+	private static final String SOAP_ORDER_ENTRYPOINT = "cxf:bean:" + ORDER_CXF_SERVICE;
+	private static final String REST_ORDER_ENTRYPOINT = "direct:rest-order-endpoint";
 
 	private static final String SEND_TO_KAFKA = "direct:send-do-kafka";
 	private static final String SAVE_ORDER = "direct:save-order";
 	private static final String SAVE_AND_PUBLISH = "direct:save-and-publish";
-	private static final String WAIT_FOR_CONFIRMATION = "direct:wait-for-confirmation";
+	private static final String WAIT_FOR_CONFIRMATION_REST_ROUTE = "direct:wait-for-confirmation-rest";
 	private static final String ASYNC_SEND_AND_CONFIRM = "seda:async-send-and-confirm";
+	private static final String WAIT_FOR_CONFIRMATION_SOAP_ROUTE = "direct:wait-for-confirmation-soap";
+	private static final String SOAP_ORDER_CLIENT = "cxf:bean:" + ORDER_CXF_CLIENT;
+	private static final String UPDATE_ORDER = "direct:update-order";
 
 	private final ApplicationProperties properties;
 	private final OrderRepository orderRepository;
@@ -54,20 +61,20 @@ public class OrderRouter extends RouteBuilder {
 		;
 
 		rest()
-			.id("rest-test")
+			.id("rest-order")
 			// @formatter:off
-			.post("/v1/test")
-				.tag("Testing")
-				.description("Test the endpoint")
+			.post("/v1/order")
+				.tag("Order")
+				.description("Create an order")
 				.consumes("application/json")
 				.produces("application/json")
 				.type(OrderRequest.class)
 				.outType(OrderResponse.class)
-				.to(REST_TEST_ENDPOINT)
+				.to(REST_ORDER_ENTRYPOINT)
 		// @formatter:on
 		;
 
-		from(REST_TEST_ENDPOINT)
+		from(REST_ORDER_ENTRYPOINT)
 			.id("redirect-get-test")
 			.setProperty(Routes.REQUEST_TYPE, simple("rest"))
 			.setProperty(Routes.REST_REQUEST_BODY, simple("${body}"))
@@ -81,7 +88,7 @@ public class OrderRouter extends RouteBuilder {
 			.end()
 		;
 
-		from(SOAP_TEST_ENTRYPOINT)
+		from(SOAP_ORDER_ENTRYPOINT)
 			.id("test-service")
 			.description("process the request example, save in database '" + Order.TABLE + "' then send to kafka broker's in with topic '" + properties.getTopics().getOrder() + "'")
 			.log("Processing request '${id}'")
@@ -150,6 +157,19 @@ public class OrderRouter extends RouteBuilder {
 			.end()
 		;
 
+		from(UPDATE_ORDER)
+			.id("update-order")
+			.log("Updating order '" + Routes.exP(Routes.ORDER) + "'")
+			.process(exchange -> {
+				final var status = exchange.getProperty(Routes.ORDER_STATUS, OrderStatus.class);
+				final var order = exchange.getProperty(Routes.ORDER, Order.class);
+				order.setFlStatus(status);
+				exchange.getIn().setBody(order);
+			})
+			.bean(orderRepository, "save")
+			.end()
+		;
+
 		final var validateKafkaContent = PredicateBuilder.and(
 			exchangeProperty(Routes.KAFKA_VALUE).isNull(),
 			exchangeProperty(Routes.KAFKA_KEY).isNull()
@@ -180,13 +200,26 @@ public class OrderRouter extends RouteBuilder {
 		final var services = properties.getApi();
 		final var notificationService = services.getNotification();
 		final var confirmNotificationEndpoint = notificationService.confirmation(Routes.exP(Routes.REQUEST_CONTENT_ID));
-		from(WAIT_FOR_CONFIRMATION)
-			.id("wait-for-confirmation")
-			.log("Waiting the confirmation of notification")
+		from(WAIT_FOR_CONFIRMATION_REST_ROUTE)
+			.id("wait-for-confirmation-rest")
+			.log("Waiting the confirmation of notification with rest request")
 			.setHeader(Exchange.HTTP_METHOD, constant("GET"))
 			.toD(confirmNotificationEndpoint)
 			.unmarshal().json(NotificationResponse.class)
 			.removeHeaders("*")
+		;
+
+		from(WAIT_FOR_CONFIRMATION_SOAP_ROUTE)
+			.id("wait-for-confirmation-soap")
+			.log("Waiting the confirmation of notification with soap request")
+			.process(exchange -> {
+				final var id = exchange.getProperty(Routes.REQUEST_CONTENT_ID, String.class);
+				final var body = new GetOrderRequest();
+				body.setOrderId(id);
+				exchange.getIn().setBody(body);
+			})
+			.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
+			.to(SOAP_ORDER_CLIENT)
 		;
 
 		// Asynchronous pipeline that sends to Kafka and retries confirmation for a specific period
@@ -194,6 +227,8 @@ public class OrderRouter extends RouteBuilder {
 			.id("async-send-and-confirm")
 			.log("[ASYNC] Starting async send and confirmation for request-id: '${id}'")
 			.to(SEND_TO_KAFKA)
+			.setProperty(Routes.ORDER_STATUS, constant(OrderStatus.PROCESSING))
+			.to(UPDATE_ORDER)
 			.process(exchange -> {
 				final long now = System.currentTimeMillis();
 				final long retryUntil = now + 60_000L; // retry for up to 60 seconds
@@ -204,7 +239,14 @@ public class OrderRouter extends RouteBuilder {
 				exchange -> exchange.getProperty("confirm.ok", boolean.class),
 				exchange -> exchange.getProperty("confirm.retryUntil", long.class) < System.currentTimeMillis()
 			))
-			.to(WAIT_FOR_CONFIRMATION)
+			// @formatter:off
+			.choice()
+				.when(exchangeProperty(Routes.REQUEST_TYPE).isEqualToIgnoreCase("rest"))
+					.to(WAIT_FOR_CONFIRMATION_REST_ROUTE)
+				.otherwise()
+					.to(WAIT_FOR_CONFIRMATION_SOAP_ROUTE)
+			// @formatter:on
+			.endChoice()
 			.process(exchange -> {
 				final var notice = exchange.getIn().getBody(NotificationResponse.class);
 				exchange.setProperty("confirm.ok", Boolean.TRUE.equals(notice.ok()));

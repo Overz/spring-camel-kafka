@@ -10,14 +10,13 @@ import org.apache.cxf.message.MessageContentsList;
 
 @Slf4j
 @RequiredArgsConstructor
-public class GetSoapPayloadFromRequestBody implements Processor {
+public class SoapOrderRequestProcessor implements Processor {
 
 	@Override
 	public void process(Exchange exchange) throws Exception {
 		final var data = exchange.getIn().getBody(MessageContentsList.class);
 		final var body = (OrderRequest) data.getFirst();
-		exchange.getIn().setBody(body);
-		exchange.setProperty(Routes.SOAP_REQUEST_BODY, body);
+		exchange.getIn().setBody(body.getId());
 		exchange.setProperty(Routes.REQUEST_CONTENT_ID, body.getId());
 	}
 }

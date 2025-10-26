@@ -3,10 +3,8 @@ package com.github.overz.configs;
 import lombok.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 
 import java.io.Serializable;
-import java.time.Duration;
 
 @Getter
 @Setter
@@ -18,8 +16,7 @@ import java.time.Duration;
 public class ApplicationProperties implements Serializable {
 	private Services services;
 	private Topics topics;
-	private Files files;
-	private Api api;
+	private Mail mail;
 
 
 	@Getter
@@ -28,7 +25,8 @@ public class ApplicationProperties implements Serializable {
 	@AllArgsConstructor
 	@NoArgsConstructor
 	public static class Services implements Serializable {
-		private String testService;
+		private String notificationService;
+		private String notificationServicePort;
 	}
 
 	@Getter
@@ -37,7 +35,7 @@ public class ApplicationProperties implements Serializable {
 	@AllArgsConstructor
 	@NoArgsConstructor
 	public static class Topics implements Serializable {
-		private String order;
+		private String notification;
 	}
 
 	@Getter
@@ -45,32 +43,8 @@ public class ApplicationProperties implements Serializable {
 	@Builder
 	@AllArgsConstructor
 	@NoArgsConstructor
-	public static class Files implements Serializable {
-		private Resource inputTestFiles;
-		private Resource outputTestFiles;
-	}
-
-	@Getter
-	@Setter
-	@Builder
-	@AllArgsConstructor
-	@NoArgsConstructor
-	public static class Api implements Serializable {
-		private Duration timeout;
-		private NotificationService notification;
-
-
-		@Getter
-		@Setter
-		@Builder
-		@AllArgsConstructor
-		@NoArgsConstructor
-		public static class NotificationService implements Serializable {
-			private String baseUrl;
-
-			public String confirmation(final String id) {
-				return String.format("%s/confirmation?id=%s", getBaseUrl(), id);
-			}
-		}
+	public static class Mail implements Serializable {
+		private String smtpHost;
+		private String smtpPort;
 	}
 }

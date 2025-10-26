@@ -21,6 +21,5 @@ spring:
 
 logging:
   level:
-    com:
-      github:
-        overz: debug
+    com.github.overz: debug
+    app-route: debug

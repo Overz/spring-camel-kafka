@@ -19,19 +19,10 @@
 		<cxf-codegen-plugin.path>${wsdl.path}/order.wsdl</cxf-codegen-plugin.path>
 	</properties>
 
-
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.camel.springboot</groupId>
 			<artifactId>camel-mail-starter</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-cache</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.github.ben-manes.caffeine</groupId>
-			<artifactId>caffeine</artifactId>
 		</dependency>
 	</dependencies>
 

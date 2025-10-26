@@ -6,13 +6,6 @@ import java.util.Arrays;
 
 @UtilityClass
 public class Routes {
-	public final String ORDER = "ORDER";
-	public final String ORDER_STATUS = "ORDER_STATUS";
-	public final String REQUEST_CONTENT_ID = "REQUEST_CONTENT_ID";
-	public final String REQUEST_TYPE = "REQUEST_TYPE";
-	public static final String CONFIRMED = "CONFIRMED";
-	public static final String CONFIRMATION_TIMER = "CONFIRMATION_TIMER";
-
 	public String routeId(final String id) {
 		return String.format("app-route.%s", id);
 	}
@@ -27,5 +20,9 @@ public class Routes {
 
 	public String k(final String v) {
 		return String.format("kafka:%s", v);
+	}
+
+	public String mail(final String host, final String port) {
+		return String.format("smtp://%s:%s", host, port);
 	}
 }

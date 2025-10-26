@@ -1,6 +1,7 @@
 package com.github.overz.configs;
 
-import com.github.overz.routes.OrderRouter;
+import com.github.overz.repositories.NotificationRepository;
+import com.github.overz.routes.NotificationRouter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,15 +11,13 @@ import org.springframework.context.annotation.Configuration;
 public class RoutesConfig {
 
 	@Bean
-	public OrderRouter orderRouter(
+	public NotificationRouter orderRouter(
 		final ApplicationProperties properties,
-		final com.github.overz.services.NotificationService notificationService,
-		final com.github.overz.services.MailService mailService
+		final NotificationRepository notificationRepository
 	) {
-		return new OrderRouter(
+		return new NotificationRouter(
 			properties,
-			notificationService,
-			mailService
+			notificationRepository
 		);
 	}
 }

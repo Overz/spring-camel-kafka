@@ -28,7 +28,8 @@ public class ApplicationProperties implements Serializable {
 	@AllArgsConstructor
 	@NoArgsConstructor
 	public static class Services implements Serializable {
-		private String testService;
+		private String orderService;
+		private String orderServicePort;
 	}
 
 	@Getter
@@ -37,7 +38,7 @@ public class ApplicationProperties implements Serializable {
 	@AllArgsConstructor
 	@NoArgsConstructor
 	public static class Topics implements Serializable {
-		private String order;
+		private String notification;
 	}
 
 	@Getter
@@ -69,7 +70,7 @@ public class ApplicationProperties implements Serializable {
 			private String baseUrl;
 
 			public String confirmation(final String id) {
-				return String.format("%s/confirmation?id=%s", getBaseUrl(), id);
+				return String.format("%s/notification?id=%s", getBaseUrl(), id);
 			}
 		}
 	}

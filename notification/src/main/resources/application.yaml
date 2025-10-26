@@ -92,6 +92,10 @@ camel:
       retries: "3"
       key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
       value-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+    mail:
+      debug-mode: "${debug}"
+      username: "${MAIL_SMTP_USERNAME:}"
+      password: "${MAIL_SMTP_PASSWORD:}"
 
 management:
   server:
@@ -120,4 +124,7 @@ resilience4j:
 
 app:
   topics:
-    order: "${TOPIC_ORDER:topic-order}"
+    notification: "${TOPIC_ORDER:topic-order}"
+  services:
+    notification-service: ${ORDER_SERVICE_ENDPOINT:/OrderService}
+    notification-service-port: ${ORDER_SERVICE_ENDPOINT:/OrderServicePort}

@@ -29,7 +29,7 @@ public class WebServiceConfig {
 	) throws IOException {
 		final var endpoint = new CxfEndpoint();
 		endpoint.setWsdlURL(resource.getURL().toString());
-		endpoint.setAddress(properties.getServices().getTestService());
+		endpoint.setAddress(properties.getServices().getNotificationService());
 		endpoint.setServiceClass(OrderServicePortType.class);
 		endpoint.setBus(bus);
 		endpoint.setDataFormat(DataFormat.POJO);

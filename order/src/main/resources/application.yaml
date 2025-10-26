@@ -71,6 +71,8 @@ camel:
     component: "servlet"
     client-request-validation: true
     binding-mode: auto
+    api-component: "openapi"
+    api-context-path: "/api-doc"
     api-property:
       title: "@project.artifactId@"
       version: "@project.version@"
@@ -114,9 +116,10 @@ resilience4j:
 
 app:
   services:
-    test-service: "${TEST_SERVICE_ENDPOINT:/TestService}"
+    order-service: "${ORDER_SERVICE_ENDPOINT:/OrderService}"
+    order-service-port: "${ORDER_SERVICE_ENDPOINT:/OrderServicePort}"
   topics:
-    order: "${TOPIC_ORDER:test}"
+    notification: "${TOPIC_ORDER:topic-notification}"
   files:
     input-test-files: "file:${TEST_FILES_DIR:@project.basedir@/test-files/input}"
     output-test-files: "file:${TEST_FILES_DIR:@project.basedir@/test-files/output}"

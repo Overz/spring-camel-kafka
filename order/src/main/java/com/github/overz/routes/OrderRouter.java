@@ -5,7 +5,6 @@ import com.github.overz.dtos.Notification;
 import com.github.overz.dtos.OrderRequest;
 import com.github.overz.dtos.OrderResponse;
 import com.github.overz.errors.SoapBadRequestException;
-import com.github.overz.errors.StreamingMessageException;
 import com.github.overz.generated.GetOrderRequest;
 import com.github.overz.generated.GetOrderResponse;
 import com.github.overz.models.Order;
@@ -77,8 +76,8 @@ public class OrderRouter extends RouteBuilder {
 		from(REST_ORDER_ENTRYPOINT)
 			.id(Routes.routeId("redirect-get-test"))
 			.log("Order request received, processing...")
-			.setProperty(Routes.REQUEST_TYPE, simple("rest"))
-			.setProperty(Routes.REQUEST_CONTENT_ID, simple("${body.id}"))
+			.setProperty(Routes.TYPE, simple("rest"))
+			.setProperty(Routes.ORDER_ID, simple("${body.id}"))
 			.to(SAVE_AND_PUBLISH_AND_CONFIRM)
 			.process(new RestOrderResponseProcessor())
 			.end()
@@ -88,7 +87,7 @@ public class OrderRouter extends RouteBuilder {
 			.id(Routes.routeId("order-service"))
 			.description("process the request example, save in database '" + Order.TABLE + "' then send to kafka broker's in with topic '" + properties.getTopics().getNotification() + "'")
 			.log("Processing request '${id}'")
-			.setProperty(Routes.REQUEST_TYPE, simple("soap"))
+			.setProperty(Routes.TYPE, simple("soap"))
 			.process(new SoapOrderRequestProcessor())
 			.to(SAVE_AND_PUBLISH_AND_CONFIRM)
 			.log("Creating response body from request id '${id}'")
@@ -114,13 +113,16 @@ public class OrderRouter extends RouteBuilder {
 		from(inputFileDefinition.build())
 			.id("test-files")
 			.log("Processing file '${header.CamelFileName}'")
+			.setProperty(Routes.TYPE, simple("file"))
 			.unmarshal().json()
 			// @formatter:off
 				.split(body())
 				.parallelProcessing()
 				.streaming()
-				.aggregationStrategy(AggregationStrategies.useOriginal())
-				.log("Processing content '${body}'")
+				.aggregationStrategy(AggregationStrategies.useOriginal(true))
+				.setBody(simple("${body[id]}"))
+				.setProperty(Routes.ORDER_ID, simple("${body}"))
+				.log("Processing file content '${body}'")
 				.to(SAVE_AND_PUBLISH_AND_CONFIRM)
 			// @formatter:on
 			.end()
@@ -149,7 +151,6 @@ public class OrderRouter extends RouteBuilder {
 			.bean(orderRepository, "save")
 			.setProperty(Routes.ORDER, body())
 			.log("Saved order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
-			.setBody(exchange -> new Notification(exchange.getIn().getBody(String.class), null))
 			.end()
 		;
 
@@ -173,16 +174,8 @@ public class OrderRouter extends RouteBuilder {
 		from(SEND_TO_KAFKA)
 			.id(Routes.routeId("send-to-kafka"))
 			.log("Processing kafka message to send ...")
-			.log(LoggingLevel.DEBUG, "Validating body to send for kafka: '${body}'")
-			// @formatter:off
-			.choice()
-				.when(PredicateBuilder.not(body().isInstanceOf(Notification.class)))
-					.throwException(new StreamingMessageException("Body content is a invalid value type"))
-				.endChoice()
-			// @formatter:on
-			.end()
 			.log(LoggingLevel.DEBUG, "Preparing to send message to kafka ...")
-//			.setBody(exchangeProperty(Routes.KAFKA_VALUE))
+			.setBody(exchange -> new Notification(exchange))
 			.removeHeaders("*")
 			.setHeader(KafkaConstants.KEY, simple("${id}"))
 			.log(LoggingLevel.DEBUG, "Marshaling body '${body}' to json format type ...")
@@ -203,30 +196,33 @@ public class OrderRouter extends RouteBuilder {
 				exchange.setProperty(Routes.CONFIRMATION_TIMER, retryUntil);
 			})
 			.removeHeaders("*")
-			.loopDoWhile(PredicateBuilder.and(
-				exchangeProperty(Routes.CONFIRMED),
-				exchangeProperty(Routes.CONFIRMATION_TIMER).isLessThanOrEqualTo(System.currentTimeMillis())
-			))
-			// @formatter:off
-				.choice()
-					.when(exchangeProperty(Routes.REQUEST_TYPE).isEqualToIgnoreCase("rest"))
-							.process(exchange -> {
-								System.out.println("");
-							})
-							.setHeader(Exchange.HTTP_METHOD, constant("GET"))
-							.toD(properties.getApi().getNotification().confirmation("${body.id}"))
-					.otherwise()
-						.process(exchange -> {
-							final var order = exchange.getProperty(Routes.ORDER, Order.class);
-							final var body = new GetOrderRequest();
-							body.setId(order.getData());
-							exchange.getIn().setBody(body);
-						})
-						.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
-						.to(SOAP_ORDER_CLIENT)
-						.validate(exchange -> exchange.getIn().getBody(GetOrderResponse.class).isOk())
-					.endChoice()
-				.delay(3000L)
+//			.loopDoWhile(PredicateBuilder.and(
+//				exchangeProperty(Routes.CONFIRMED),
+//				exchangeProperty(Routes.CONFIRMATION_TIMER).isLessThanOrEqualTo(System.currentTimeMillis())
+//			))
+//			// @formatter:off
+//				.choice()
+//					.when(PredicateBuilder.or(
+//						exchangeProperty(Routes.TYPE).isEqualToIgnoreCase("rest"),
+//						exchangeProperty(Routes.TYPE).isEqualToIgnoreCase("file")
+//					))
+//						.process(exchange -> {
+//							System.out.println("ok");
+//						})
+//						.setHeader(Exchange.HTTP_METHOD, constant("GET"))
+//						.toD(properties.getApi().getNotification().confirmation("${body.id}"))
+//					.otherwise()
+//						.process(exchange -> {
+//							final var order = exchange.getProperty(Routes.ORDER, Order.class);
+//							final var body = new GetOrderRequest();
+//							body.setId(order.getData());
+//							exchange.getIn().setBody(body);
+//						})
+//						.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
+//						.to(SOAP_ORDER_CLIENT)
+//						.validate(exchange -> exchange.getIn().getBody(GetOrderResponse.class).isOk())
+//					.endChoice()
+//				.delay(3000L)
 			// @formatter:on
 			.end()
 		;

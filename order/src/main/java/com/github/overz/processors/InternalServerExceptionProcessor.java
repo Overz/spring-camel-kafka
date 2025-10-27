@@ -16,7 +16,7 @@ public class InternalServerExceptionProcessor implements Processor {
 	@Override
 	public void process(final Exchange exchange) throws Exception {
 		final var error = exchange.getException(Throwable.class);
-		final var type = exchange.getProperty(Routes.REQUEST_TYPE, String.class);
+		final var type = exchange.getProperty(Routes.TYPE, String.class);
 
 		if (error instanceof ApplicationError ex) {
 			if ("rest".equalsIgnoreCase(type)) {

@@ -8,8 +8,8 @@ import java.util.Arrays;
 public class Routes {
 	public final String ORDER = "ORDER";
 	public final String ORDER_STATUS = "ORDER_STATUS";
-	public final String REQUEST_CONTENT_ID = "REQUEST_CONTENT_ID";
-	public final String REQUEST_TYPE = "REQUEST_TYPE";
+	public final String ORDER_ID = "ORDER_ID";
+	public final String TYPE = "REQUEST_TYPE";
 	public static final String CONFIRMED = "CONFIRMED";
 	public static final String CONFIRMATION_TIMER = "CONFIRMATION_TIMER";
 

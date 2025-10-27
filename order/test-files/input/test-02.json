@@ -1,11 +1,11 @@
 [
 	{
-		"testId": "file-02-1"
+		"id": "file-02-1"
 	},
 	{
-		"testId": "file-02-2"
+		"id": "file-02-2"
 	},
 	{
-		"testId": "file-02-3"
+		"id": "file-02-3"
 	}
 ]

@@ -17,6 +17,6 @@ public class SoapOrderRequestProcessor implements Processor {
 		final var data = exchange.getIn().getBody(MessageContentsList.class);
 		final var body = (OrderRequest) data.getFirst();
 		exchange.getIn().setBody(body.getId());
-		exchange.setProperty(Routes.REQUEST_CONTENT_ID, body.getId());
+		exchange.setProperty(Routes.ORDER_ID, body.getId());
 	}
 }

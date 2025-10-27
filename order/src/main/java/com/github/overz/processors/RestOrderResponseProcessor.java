@@ -11,7 +11,7 @@ public class RestOrderResponseProcessor implements Processor {
 
 	@Override
 	public void process(Exchange exchange) throws Exception {
-		final var requestId = exchange.getProperty(Routes.REQUEST_CONTENT_ID, String.class);
+		final var requestId = exchange.getProperty(Routes.ORDER_ID, String.class);
 		exchange.getIn().setBody(new OrderResponse(requestId));
 	}
 }

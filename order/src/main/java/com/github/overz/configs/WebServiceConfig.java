@@ -63,8 +63,7 @@ public class WebServiceConfig {
 	@Bean
 	public CxfEndpoint baseOrderCxfEndpoint(
 		final Bus bus,
-		final ApplicationProperties properties,
-		@Value("classpath:wsdl/order.wsdl") Resource resource
+		final ApplicationProperties properties
 	) throws IOException {
 		final var endpoint = new CxfEndpoint();
 		endpoint.setWsdlURL("classpath:wsdl/order.wsdl");

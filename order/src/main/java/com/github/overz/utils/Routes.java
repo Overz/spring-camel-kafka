@@ -11,7 +11,6 @@ public class Routes {
 	public final String ORDER_ID = "ORDER_ID";
 	public final String TYPE = "REQUEST_TYPE";
 	public static final String CONFIRMED = "CONFIRMED";
-	public static final String CONFIRMATION_TIMER = "CONFIRMATION_TIMER";
 
 	public String routeId(final String id) {
 		return String.format("app-route.%s", id);

@@ -3,15 +3,17 @@
 						 xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
 						 xmlns:tns="http://github.com/overz/"
 						 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-						 targetNamespace="http://github.com/overz/">
+						 targetNamespace="http://github.com/overz/"
+						 name="OrderService">
 
+	<!-- Tipos -->
 	<types>
 		<xsd:schema targetNamespace="http://github.com/overz/">
 			<!-- Request de criação -->
 			<xsd:element name="orderRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="orderId" type="xsd:string"/>
+						<xsd:element name="id" type="xsd:string"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -29,7 +31,7 @@
 			<xsd:element name="getOrderRequest">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="orderId" type="xsd:string"/>
+						<xsd:element name="id" type="xsd:string"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -38,8 +40,8 @@
 			<xsd:element name="getOrderResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="status" type="xsd:string"/>
-						<xsd:element name="createdAt" type="xsd:string" minOccurs="0"/>
+						<xsd:element name="id" type="xsd:string"/>
+						<xsd:element name="ok" type="xsd:boolean"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -65,7 +67,7 @@
 	</message>
 
 	<!-- Port Type -->
-	<portType name="OrderServicePortType">
+	<portType name="OrderServicePort">
 		<operation name="processOrder">
 			<input message="tns:OrderRequestMessage"/>
 			<output message="tns:OrderResponseMessage"/>
@@ -78,7 +80,7 @@
 	</portType>
 
 	<!-- Binding -->
-	<binding name="OrderServiceBinding" type="tns:OrderServicePortType">
+	<binding name="OrderServicePortBinding" type="tns:OrderServicePort">
 		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
 
 		<operation name="processOrder">
@@ -104,8 +106,8 @@
 
 	<!-- Service -->
 	<service name="OrderService">
-		<port name="OrderServicePort" binding="tns:OrderServiceBinding">
-			<soap:address location="http://localhost:3000/TestService"/>
+		<port name="OrderServicePort" binding="tns:OrderServicePortBinding">
+			<soap:address location="http://localhost:3000/OrderService"/>
 		</port>
 	</service>
 

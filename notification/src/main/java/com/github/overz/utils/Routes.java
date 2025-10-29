@@ -6,6 +6,9 @@ import java.util.Arrays;
 
 @UtilityClass
 public class Routes {
+	public final String NOTIFICATION = "NOTIFICATION";
+	public final String NOTIFICATION_ID = "NOTIFICATION_ID";
+
 	public String routeId(final String id) {
 		return String.format("app-route.%s", id);
 	}

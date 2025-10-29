@@ -92,6 +92,9 @@ camel:
       retries: "3"
       key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
       value-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+      group-id: "${spring.application.name}"
+      auto-offset-reset: "earliest"
+      auto-commit-enable: true
     mail:
       debug-mode: "${debug}"
       username: "${MAIL_SMTP_USERNAME:}"
@@ -124,7 +127,10 @@ resilience4j:
 
 app:
   topics:
-    notification: "${TOPIC_ORDER:topic-order}"
+    notification: "${TOPIC_NOTIFICATION:topic-notification}"
   services:
-    notification-service: ${ORDER_SERVICE_ENDPOINT:/OrderService}
-    notification-service-port: ${ORDER_SERVICE_ENDPOINT:/OrderServicePort}
+    order-service: "${NOTIFICATION_SERVICE_ENDPOINT:/OrderService}"
+    order-service-port: "${NOTIFICATION_SERVICE_ENDPOINT_PORT:/OrderServicePort}"
+  mail:
+    smtp-port: "${MAIL_SMTP_PORT:5000}"
+    smtp-host: "${MAIL_SMTP_HOST:localhost}"

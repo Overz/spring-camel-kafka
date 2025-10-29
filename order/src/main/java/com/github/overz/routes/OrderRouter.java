@@ -6,7 +6,6 @@ import com.github.overz.dtos.OrderRequest;
 import com.github.overz.dtos.OrderResponse;
 import com.github.overz.errors.SoapBadRequestException;
 import com.github.overz.generated.GetOrderRequest;
-import com.github.overz.generated.GetOrderResponse;
 import com.github.overz.models.Order;
 import com.github.overz.models.OrderStatus;
 import com.github.overz.processors.*;
@@ -24,6 +23,7 @@ import org.apache.camel.component.cxf.common.message.CxfConstants;
 import org.apache.camel.component.kafka.KafkaConstants;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.regex.Pattern;
 
 import static com.github.overz.configs.WebServiceConfig.ORDER_CXF_CLIENT;
@@ -111,7 +111,7 @@ public class OrderRouter extends RouteBuilder {
 			.fileExist(RouteFileDefinition.FileExist.OVERRIDE);
 
 		from(inputFileDefinition.build())
-			.id("test-files")
+			.id(Routes.routeId("test-files"))
 			.log("Processing file '${header.CamelFileName}'")
 			.setProperty(Routes.TYPE, simple("file"))
 			.unmarshal().json()
@@ -189,42 +189,47 @@ public class OrderRouter extends RouteBuilder {
 		from(CONFIRM_NOTIFICATION_SENT)
 			.id(Routes.routeId("confirm-notification-sent"))
 			.log("Processing the confirmation notification to send ...")
-			.process(exchange -> {
-				final var now = System.currentTimeMillis();
-				final var retryUntil = now + properties.getApi().getTimeout().toMillis();
-				exchange.setProperty(Routes.CONFIRMED, false);
-				exchange.setProperty(Routes.CONFIRMATION_TIMER, retryUntil);
-			})
+			.setProperty(Routes.CONFIRMED, simple("false"))
 			.removeHeaders("*")
-//			.loopDoWhile(PredicateBuilder.and(
-//				exchangeProperty(Routes.CONFIRMED),
-//				exchangeProperty(Routes.CONFIRMATION_TIMER).isLessThanOrEqualTo(System.currentTimeMillis())
-//			))
-//			// @formatter:off
-//				.choice()
-//					.when(PredicateBuilder.or(
-//						exchangeProperty(Routes.TYPE).isEqualToIgnoreCase("rest"),
-//						exchangeProperty(Routes.TYPE).isEqualToIgnoreCase("file")
-//					))
-//						.process(exchange -> {
-//							System.out.println("ok");
-//						})
-//						.setHeader(Exchange.HTTP_METHOD, constant("GET"))
+			.loopDoWhile(exchange -> {
+				final var confirmed = exchange.getProperty(Routes.CONFIRMED, Boolean.class);
+				if (confirmed) {
+					return false;
+				}
+
+				final var future = Instant.now().plusMillis(properties.getApi().getTimeout().toMillis());
+				return !future.isBefore(Instant.now());
+			})
+			// @formatter:off
+				.choice()
+					.when(PredicateBuilder.or(
+						exchangeProperty(Routes.TYPE).isEqualToIgnoreCase("rest"),
+						exchangeProperty(Routes.TYPE).isEqualToIgnoreCase("file")
+					))
+						.process(exchange -> {
+							System.out.println("confirmation rest/file");
+						})
+						.setHeader(Exchange.HTTP_METHOD, constant("GET"))
 //						.toD(properties.getApi().getNotification().confirmation("${body.id}"))
-//					.otherwise()
-//						.process(exchange -> {
-//							final var order = exchange.getProperty(Routes.ORDER, Order.class);
-//							final var body = new GetOrderRequest();
-//							body.setId(order.getData());
-//							exchange.getIn().setBody(body);
-//						})
-//						.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
+//						.validate(exchange -> exchange.getIn().getBody(Notification.class).ok())
+						.setProperty(Routes.CONFIRMED, simple("true"))
+					.otherwise()
+						.process(exchange -> {
+							final var order = exchange.getProperty(Routes.ORDER, Order.class);
+							final var body = new GetOrderRequest();
+							body.setId(order.getData());
+							exchange.getIn().setBody(body);
+							System.out.println("confirmation soap");
+						})
+						.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
 //						.to(SOAP_ORDER_CLIENT)
 //						.validate(exchange -> exchange.getIn().getBody(GetOrderResponse.class).isOk())
-//					.endChoice()
-//				.delay(3000L)
+						.setProperty(Routes.CONFIRMED, simple("true"))
+					.endChoice()
+				.delay(3000L)
 			// @formatter:on
 			.end()
+			.log(LoggingLevel.DEBUG, "Notification was sent successfully ...")
 		;
 
 		// Asynchronous pipeline that sends to Kafka and retries confirmation for a specific period

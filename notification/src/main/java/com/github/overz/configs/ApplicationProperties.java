@@ -25,8 +25,8 @@ public class ApplicationProperties implements Serializable {
 	@AllArgsConstructor
 	@NoArgsConstructor
 	public static class Services implements Serializable {
-		private String notificationService;
-		private String notificationServicePort;
+		private String orderService;
+		private String orderServicePort;
 	}
 
 	@Getter

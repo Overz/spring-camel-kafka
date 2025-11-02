@@ -33,7 +33,7 @@ import static com.github.overz.configs.WebServiceConfig.ORDER_CXF_SERVICE;
 @RequiredArgsConstructor
 public class OrderRouter extends RouteBuilder {
 	private static final String SOAP_ORDER_ENTRYPOINT = "cxf:bean:" + ORDER_CXF_SERVICE;
-	private static final String REST_ORDER_ENTRYPOINT = "direct:rest-order-endpoint";
+	private static final String REST_ORDER_ENTRYPOINT = "direct:rest-order-entrypoint";
 	private static final String SOAP_ORDER_CLIENT = "cxf:bean:" + ORDER_CXF_CLIENT;
 
 	private static final String SAVE_ORDER = "direct:save-order";
@@ -74,7 +74,7 @@ public class OrderRouter extends RouteBuilder {
 		;
 
 		from(REST_ORDER_ENTRYPOINT)
-			.id(Routes.routeId("redirect-get-test"))
+			.id(Routes.routeId("redirect-post-order"))
 			.log("Order request received, processing...")
 			.setProperty(Routes.TYPE, simple("rest"))
 			.setProperty(Routes.ORDER_ID, simple("${body.id}"))
@@ -210,7 +210,7 @@ public class OrderRouter extends RouteBuilder {
 							System.out.println("confirmation rest/file");
 						})
 						.setHeader(Exchange.HTTP_METHOD, constant("GET"))
-//						.toD(properties.getApi().getNotification().confirmation("${body.id}"))
+						.toD(properties.getApi().getNotification().confirmation("${body.id}"))
 //						.validate(exchange -> exchange.getIn().getBody(Notification.class).ok())
 						.setProperty(Routes.CONFIRMED, simple("true"))
 					.otherwise()

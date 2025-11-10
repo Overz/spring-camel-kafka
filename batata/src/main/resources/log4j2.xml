@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Properties>
+		<Property name="LOG_LEVEL">${env:LOG_LEVEL:-INFO}</Property>
+	</Properties>
+
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout>
+				<!-- @formatter:off -->
+				<Pattern>%style{%d{yyyy-MM-dd HH:mm:ss.SSS}}{white} %highlight{%-5level}{FATAL=bright red bold, ERROR=red bold, WARN=yellow bold, INFO=green bold, DEBUG=blue bold, TRACE=cyan} %style{%pid}{magenta} --- %style{[%15.15t]}{blue} %style{%-40.40logger{236}}{cyan} : %msg%n%throwable</Pattern>
+				<!-- @formatter:on -->
+			</PatternLayout>
+		</Console>
+	</Appenders>
+
+	<Loggers>
+		<Root level="${LOG_LEVEL}">
+			<AppenderRef ref="Console"/>
+		</Root>
+	</Loggers>
+</Configuration>

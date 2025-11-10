@@ -1,10 +1,9 @@
 package com.github.overz.routes;
 
-import com.github.overz.configs.ApplicationProperties;
-import com.github.overz.dtos.NotificationEvent;
+import com.github.overz.dtos.Notification;
 import com.github.overz.generated.GetOrderRequest;
 import com.github.overz.generated.GetOrderResponse;
-import com.github.overz.repositories.NotificationRepository;
+import com.github.overz.utils.RouteUtils;
 import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +25,6 @@ public class NotificationRouter extends RouteBuilder {
 	private static final String SAVE_CONFIRMATION = "direct:save-confirmation";
 	private static final String FIND_NOTIFICATION = "direct:find-notification";
 
-	private final ApplicationProperties properties;
-	private final NotificationRepository repo;
-
 	@Override
 	public void configure() throws Exception {
 		rest()
@@ -37,17 +33,18 @@ public class NotificationRouter extends RouteBuilder {
 			// @formatter:off
 				.param()
 					.name("id")
-					.type(RestParamType.query)
+					.type(RestParamType.path)
 					.required(true)
 					.dataType("string")
 					.description("The id sent to notification")
 				.endParam()
 			// @formatter:on
+			.outType(Notification.class)
 			.to(REST_ORDER_ENTRPOINT)
 		;
 
 		from(REST_ORDER_ENTRPOINT)
-			.id(Routes.routeId("redirect-post-order"))
+			.id(RouteUtils.routeId("redirect-post-order"))
 			.log("Order request received, processing...")
 			.setBody(header("id"))
 			.to(FIND_NOTIFICATION)
@@ -57,7 +54,7 @@ public class NotificationRouter extends RouteBuilder {
 		;
 
 		from(SOAP_ORDER_ENTRYPOINT)
-			.id(Routes.routeId("notification-soap-get-order"))
+			.id(RouteUtils.routeId("notification-soap-get-order"))
 			.choice()
 			// @formatter:off
 			.when(header(CxfConstants.OPERATION_NAME).isEqualTo("getOrder"))
@@ -65,10 +62,10 @@ public class NotificationRouter extends RouteBuilder {
 				final var data = exchange.getIn().getBody(MessageContentsList.class);
 				final var body = (GetOrderRequest) data.getFirst();
 
-				final var opt = repo.findByCdOrder(body.getId());
+//				final var opt = repo.findByCdOrder(body.getId());
 				final var resp = new GetOrderResponse();
 				resp.setId(body.getId());
-				resp.setOk(opt.isPresent());
+//				resp.setOk(opt.isPresent());
 				exchange.getMessage().setBody(resp);
 			})
 			.otherwise()
@@ -78,12 +75,11 @@ public class NotificationRouter extends RouteBuilder {
 			.end()
 		;
 
-		final var notificationIdProperty = Routes.exP(Routes.NOTIFICATION_ID);
-		final var topic = properties.getTopics().getNotification();
-		from(Routes.k(topic))
-			.id(Routes.routeId("notification-consumer"))
+		final var notificationIdProperty = RouteUtils.exP(Routes.NOTIFICATION_ID);
+		from(RouteUtils.k("{{app.topics.notification}}"))
+			.id(RouteUtils.routeId("notification-consumer"))
 			.log("Processing message received: '${body}'")
-			.unmarshal().json(NotificationEvent.class)
+			.unmarshal().json(Notification.class)
 			.setProperty(Routes.NOTIFICATION, body())
 			.setProperty(Routes.NOTIFICATION_ID, simple("${body.id}"))
 			.to(SEND_MAIL)
@@ -91,9 +87,9 @@ public class NotificationRouter extends RouteBuilder {
 			.end()
 		;
 
-		final var mail = Routes.mail(properties.getMail().getSmtpHost(), properties.getMail().getSmtpPort());
+		final var mail = RouteUtils.smtp("{{app.mail.smtp.host}}", "{{app.mail.smtp.port}}");
 		from(SEND_MAIL)
-			.id(Routes.routeId("send-email"))
+			.id(RouteUtils.routeId("send-email"))
 			.setBody(simple("resource:classpath:templates/email.html"))
 			.setHeader(MailConstants.MAIL_FROM, constant("no-reply@example.com"))
 			.setHeader(MailConstants.MAIL_TO, simpleF("%s@email.com", notificationIdProperty))
@@ -105,19 +101,20 @@ public class NotificationRouter extends RouteBuilder {
 		;
 
 		from(SAVE_CONFIRMATION)
-			.id(Routes.routeId("save-confirmation"))
+			.id(RouteUtils.routeId("save-confirmation"))
 			.log("Saving confirmation message: '${body}")
 			.setBody(exchangeProperty(Routes.NOTIFICATION))
-			.bean(repo, "save")
+//			.bean(repo, "save")
 			.log("Confirmation message saved: '${body}")
 			.end()
 		;
 
 		from(FIND_NOTIFICATION)
-			.id(Routes.routeId("find-notification"))
+			.id(RouteUtils.routeId("find-notification"))
 			.setBody(exchange -> {
 				final var id = exchange.getIn().getBody(String.class);
-				return repo.findByCdOrder(id).orElse(null);
+//				return repo.findByCdOrder(id).orElse(null);
+				return null;
 			})
 			.validate(body().isNotNull())
 			.end();

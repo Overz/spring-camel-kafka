@@ -11,6 +11,7 @@ import com.github.overz.models.OrderStatus;
 import com.github.overz.processors.*;
 import com.github.overz.repositories.OrderRepository;
 import com.github.overz.utils.RouteFileDefinition;
+import com.github.overz.utils.RouteUtils;
 import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +61,7 @@ public class OrderRouter extends RouteBuilder {
 		;
 
 		rest()
-			.id(Routes.routeId("rest-order"))
+			.id(RouteUtils.routeId("rest-order"))
 			// @formatter:off
 			.post("/v1/order")
 				.tag("Order")
@@ -74,7 +75,7 @@ public class OrderRouter extends RouteBuilder {
 		;
 
 		from(REST_ORDER_ENTRYPOINT)
-			.id(Routes.routeId("redirect-post-order"))
+			.id(RouteUtils.routeId("redirect-post-order"))
 			.log("Order request received, processing...")
 			.setProperty(Routes.TYPE, simple("rest"))
 			.setProperty(Routes.ORDER_ID, simple("${body.id}"))
@@ -84,7 +85,7 @@ public class OrderRouter extends RouteBuilder {
 		;
 
 		from(SOAP_ORDER_ENTRYPOINT)
-			.id(Routes.routeId("order-service"))
+			.id(RouteUtils.routeId("order-service"))
 			.description("process the request example, save in database '" + Order.TABLE + "' then send to kafka broker's in with topic '" + properties.getTopics().getNotification() + "'")
 			.log("Processing request '${id}'")
 			.setProperty(Routes.TYPE, simple("soap"))
@@ -111,7 +112,7 @@ public class OrderRouter extends RouteBuilder {
 			.fileExist(RouteFileDefinition.FileExist.OVERRIDE);
 
 		from(inputFileDefinition.build())
-			.id(Routes.routeId("test-files"))
+			.id(RouteUtils.routeId("test-files"))
 			.log("Processing file '${header.CamelFileName}'")
 			.setProperty(Routes.TYPE, simple("file"))
 			.unmarshal().json()
@@ -133,7 +134,7 @@ public class OrderRouter extends RouteBuilder {
 		;
 
 		from(SAVE_AND_PUBLISH_AND_CONFIRM)
-			.id(Routes.routeId("save-and-publish"))
+			.id(RouteUtils.routeId("save-and-publish"))
 			.to(SAVE_ORDER)
 			.to(SEND_TO_KAFKA)
 			.setProperty(Routes.ORDER_STATUS, constant(OrderStatus.PROCESSING))
@@ -143,19 +144,19 @@ public class OrderRouter extends RouteBuilder {
 		;
 
 		from(SAVE_ORDER)
-			.id(Routes.routeId("save-order"))
+			.id(RouteUtils.routeId("save-order"))
 			.log("Order '${body}' received, marshalling as json")
 			.log("Creating order from request body, request-id: '${id}', body: '${body}'")
 			.process(new CreateOrderProcessor())
-			.log("Saving order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
+			.log("Saving order '" + RouteUtils.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
 			.bean(orderRepository, "save")
 			.setProperty(Routes.ORDER, body())
-			.log("Saved order '" + Routes.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
+			.log("Saved order '" + RouteUtils.exP(Routes.ORDER) + "' to database, request-id: '${id}'")
 			.end()
 		;
 
 		from(UPDATE_ORDER)
-			.id(Routes.routeId("update-order"))
+			.id(RouteUtils.routeId("update-order"))
 			.log("Processing and updating order")
 			.log(LoggingLevel.DEBUG, "Change order status ...")
 			.process(exchange -> {
@@ -164,7 +165,7 @@ public class OrderRouter extends RouteBuilder {
 				order.setFlStatus(status);
 				exchange.getIn().setBody(order);
 			})
-			.log("Updating order in database '" + Routes.exP(Routes.ORDER) + "'")
+			.log("Updating order in database '" + RouteUtils.exP(Routes.ORDER) + "'")
 			.bean(orderRepository, "save")
 			.setProperty(Routes.ORDER, body())
 			.end()
@@ -172,22 +173,22 @@ public class OrderRouter extends RouteBuilder {
 
 		final var topic = properties.getTopics().getNotification();
 		from(SEND_TO_KAFKA)
-			.id(Routes.routeId("send-to-kafka"))
+			.id(RouteUtils.routeId("send-to-kafka"))
 			.log("Processing kafka message to send ...")
 			.log(LoggingLevel.DEBUG, "Preparing to send message to kafka ...")
-			.setBody(exchange -> new Notification(exchange))
+			.setBody(exchange -> new Notification(exchange.getProperty(Routes.ORDER_ID, String.class)))
 			.removeHeaders("*")
 			.setHeader(KafkaConstants.KEY, simple("${id}"))
 			.log(LoggingLevel.DEBUG, "Marshaling body '${body}' to json format type ...")
 			.marshal().json()
 			.log("Sending to kafka, topic: '" + topic + "', key '${id}', value: '${body}'")
-			.to(Routes.k(topic))
+			.to(RouteUtils.k(topic))
 			.log("Message sent to kafka, topic '" + topic + "', key '${id}', value: '${body}'")
 			.end()
 		;
 
 		from(CONFIRM_NOTIFICATION_SENT)
-			.id(Routes.routeId("confirm-notification-sent"))
+			.id(RouteUtils.routeId("confirm-notification-sent"))
 			.log("Processing the confirmation notification to send ...")
 			.setProperty(Routes.CONFIRMED, simple("false"))
 			.removeHeaders("*")

@@ -3,66 +3,68 @@
 				 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 				 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
 	<parent>
 		<groupId>com.github.overz</groupId>
 		<artifactId>spring-camel-kafka</artifactId>
 		<version>0.0.1</version>
-		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>common</artifactId>
 	<version>0.0.1</version>
+	<packaging>jar</packaging>
 
 	<properties>
-		<cxf-codegen-plugin.path>${wsdl.path}/order.wsdl</cxf-codegen-plugin.path>
+		<wsdl.order>${wsdl.path}/order.wsdl</wsdl.order>
 	</properties>
 
 	<dependencies>
-		<!-- CXF -->
 		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-frontend-jaxws</artifactId>
+			<groupId>jakarta.xml.ws</groupId>
+			<artifactId>jakarta.xml.ws-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-transports-http</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-bindings-xml</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-bindings-soap</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-frontend-jaxrs</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-ws-policy</artifactId>
-		</dependency>
-
-		<!-- CAMEL -->
-		<dependency>
-			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.camel</groupId>
-			<artifactId>camel-jackson</artifactId>
+			<artifactId>camel-kafka</artifactId>
 		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-			<!-- Plugin para gerar classes Java a partir do WSDL -->
 			<plugin>
 				<groupId>org.apache.cxf</groupId>
 				<artifactId>cxf-codegen-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>generate-sources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>wsdl2java</goal>
+						</goals>
+						<configuration>
+							<wsdlOptions>
+								<!-- https://cxf.apache.org/docs/wsdl-to-java.html -->
+								<wsdlOption>
+									<!--suppress UnresolvedMavenProperty -->
+									<wsdl>${wsdl.order}</wsdl>
+									<packagenames>${project.base-package}.generated</packagenames>
+									<extraargs>
+										<extraarg>-autoNameResolution</extraarg>
+										<extraarg>-all</extraarg>
+										<extraarg>-mark-generated</extraarg>
+										<extraarg>-bareMethods=false</extraarg>
+									</extraargs>
+								</wsdlOption>
+							</wsdlOptions>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
+
 </project>

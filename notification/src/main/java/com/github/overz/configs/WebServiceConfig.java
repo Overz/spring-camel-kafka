@@ -1,44 +1,39 @@
 package com.github.overz.configs;
 
 import com.github.overz.generated.OrderServicePort;
+import org.apache.camel.BindToRegistry;
+import org.apache.camel.Configuration;
+import org.apache.camel.PropertyInject;
 import org.apache.camel.component.cxf.common.DataFormat;
 import org.apache.camel.component.cxf.jaxws.CxfEndpoint;
 import org.apache.cxf.Bus;
-import org.apache.cxf.bus.spring.SpringBus;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-
-import java.io.IOException;
+import org.apache.cxf.bus.extension.ExtensionManagerBus;
+import org.apache.cxf.ext.logging.LoggingInInterceptor;
+import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 
 @Configuration
 public class WebServiceConfig {
 	public static final String ORDER_CXF_SERVICE = "notification-order-cxf-service";
 
-	@Bean(name = Bus.DEFAULT_BUS_ID)
+	@BindToRegistry(Bus.DEFAULT_BUS_ID)
 	public Bus bus() {
-		return new SpringBus(true);
+		final var bus = new ExtensionManagerBus();
+		bus.getInInterceptors().add(new LoggingInInterceptor());
+		bus.getOutInterceptors().add(new LoggingOutInterceptor());
+		return bus;
 	}
 
-	@Bean
-	public CxfEndpoint baseOrderCxfEndpoint(
-		final Bus bus,
-		final ApplicationProperties properties,
-		@Value("classpath:wsdl/order.wsdl") Resource resource
-	) throws IOException {
+	public CxfEndpoint orderCxfService(
+		@PropertyInject("app.soap.order.endpoint") final String orderEndpoint,
+		final Bus bus
+	) {
 		final var endpoint = new CxfEndpoint();
 		endpoint.setWsdlURL("classpath:wsdl/order.wsdl");
-		endpoint.setAddress(properties.getServices().getOrderService());
+		endpoint.setAddress(orderEndpoint);
 		endpoint.setServiceClass(OrderServicePort.class);
 		endpoint.setBus(bus);
 		endpoint.setDataFormat(DataFormat.POJO);
 		endpoint.setLoggingFeatureEnabled(true);
 		return endpoint;
-	}
-
-	@Bean(ORDER_CXF_SERVICE)
-	public CxfEndpoint orderCxfService(final CxfEndpoint baseOrderCxfEndpoint) {
-		return baseOrderCxfEndpoint.copy();
 	}
 }

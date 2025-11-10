@@ -3,24 +3,17 @@
 				 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.apache.camel</groupId>
-		<artifactId>camel-parent</artifactId>
-		<version>4.14.2</version>
-		<relativePath/>
-	</parent>
-
 	<groupId>com.github.overz</groupId>
 	<artifactId>spring-camel-kafka</artifactId>
 	<version>0.0.1</version>
-	<name>${project.artifactId}</name>
 
 	<packaging>pom</packaging>
 
 	<modules>
+		<module>batata</module>
 		<module>common</module>
 		<module>order</module>
-<!--		<module>notification</module>-->
+		<module>notification</module>
 	</modules>
 
 	<properties>
@@ -28,18 +21,21 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
+		<project.base-package>com.github.overz</project.base-package>
 		<resources.path>${project.basedir}/src/main/resources</resources.path>
 		<openapi.path>${resources.path}/openapi</openapi.path>
 		<wsdl.path>${resources.path}/wsdl</wsdl.path>
+		<common-module.version>${project.version}</common-module.version>
 
-		<spring-boot.version>3.4.4</spring-boot.version>
-		<spring-cloud.version>2024.0.0</spring-cloud.version>
-		<camel.version>4.10.2</camel.version>
-		<camel.cxf.version>3.17.0</camel.cxf.version>
+		<spring-boot.version>3.5.7</spring-boot.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
+		<camel.version>4.16.0</camel.version>
 		<cxf.version>4.1.1</cxf.version>
+		<slf4j.version>2.0.17</slf4j.version>
+		<log4j2.version>2.24.3</log4j2.version>
 		<junit.version>5.12.1</junit.version>
-		<spring.version>3.4.3</spring.version>
 		<lombok.version>1.18.36</lombok.version>
+		<hikari-cp.version>7.0.2</hikari-cp.version>
 	</properties>
 
 	<dependencyManagement>
@@ -55,13 +51,6 @@
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
 				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.junit</groupId>
-				<artifactId>junit-bom</artifactId>
-				<version>${junit.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -87,81 +76,86 @@
 				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>com.github.overz</groupId>
-				<artifactId>common</artifactId>
-				<version>0.0.1</version>
-			</dependency>
-			<dependency>
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
 				<version>${lombok.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-bom</artifactId>
+				<version>${slf4j.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-bom</artifactId>
+				<version>${log4j2.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>${junit.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.github.overz</groupId>
+				<artifactId>common</artifactId>
+				<version>${common-module.version}</version>
+				<scope>compile</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.zaxxer</groupId>
+				<artifactId>HikariCP</artifactId>
+				<version>${hikari-cp.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<scope>test</scope>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-params</artifactId>
-			<scope>test</scope>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.xml.messaging.saaj</groupId>
-			<artifactId>saaj-impl</artifactId>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
 		</dependency>
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>${project.basedir}/src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
 		<pluginManagement>
 			<plugins>
-				<!-- Plugin para gerar classes Java a partir do WSDL -->
 				<plugin>
 					<groupId>org.apache.cxf</groupId>
 					<artifactId>cxf-codegen-plugin</artifactId>
 					<version>${cxf.version}</version>
-					<executions>
-						<execution>
-							<id>generate-sources</id>
-							<phase>generate-sources</phase>
-							<goals>
-								<goal>wsdl2java</goal>
-							</goals>
-							<configuration>
-								<sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
-								<wsdlOptions>
-									<!-- https://cxf.apache.org/docs/wsdl-to-java.html -->
-									<wsdlOption>
-										<!--suppress UnresolvedMavenProperty -->
-										<wsdl>${cxf-codegen-plugin.path}</wsdl>
-										<packagenames>com.github.overz.generated</packagenames>
-										<extraargs>
-											<extraarg>-autoNameResolution</extraarg>
-											<extraarg>-all</extraarg>
-											<extraarg>-mark-generated</extraarg>
-											<extraarg>-bareMethods=false</extraarg>
-										</extraargs>
-									</wsdlOption>
-								</wsdlOptions>
-							</configuration>
-						</execution>
-					</executions>
+					<configuration>
+						<sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
+					</configuration>
 				</plugin>
-
-				<!-- Plugin de compilação -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
@@ -170,11 +164,11 @@
 						<release>${java.version}</release>
 						<parameters>true</parameters>
 						<annotationProcessorPaths>
-							<path>
-								<groupId>org.springframework.boot</groupId>
-								<artifactId>spring-boot-configuration-processor</artifactId>
-								<version>${spring.version}</version>
-							</path>
+							<!--							<path>-->
+							<!--								<groupId>org.springframework.boot</groupId>-->
+							<!--								<artifactId>spring-boot-configuration-processor</artifactId>-->
+							<!--								<version>${spring-boot.version}</version>-->
+							<!--							</path>-->
 							<path>
 								<groupId>org.projectlombok</groupId>
 								<artifactId>lombok</artifactId>
@@ -185,40 +179,13 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
-	</build>
 
-<!--	<profiles>-->
-<!--		<profile>-->
-<!--			<id>native</id>-->
-<!--			<build>-->
-<!--				<pluginManagement>-->
-<!--					<plugins>-->
-<!--						<plugin>-->
-<!--							<groupId>org.apache.maven.plugins</groupId>-->
-<!--							<artifactId>maven-jar-plugin</artifactId>-->
-<!--							<configuration>-->
-<!--								<archive>-->
-<!--									<manifestEntries>-->
-<!--										<Spring-Boot-Native-Processed>true</Spring-Boot-Native-Processed>-->
-<!--									</manifestEntries>-->
-<!--								</archive>-->
-<!--							</configuration>-->
-<!--						</plugin>-->
-<!--						<plugin>-->
-<!--							<groupId>org.springframework.boot</groupId>-->
-<!--							<artifactId>spring-boot-maven-plugin</artifactId>-->
-<!--							<executions>-->
-<!--								<execution>-->
-<!--									<id>process-aot</id>-->
-<!--									<goals>-->
-<!--										<goal>process-aot</goal>-->
-<!--									</goals>-->
-<!--								</execution>-->
-<!--							</executions>-->
-<!--						</plugin>-->
-<!--					</plugins>-->
-<!--				</pluginManagement>-->
-<!--			</build>-->
-<!--		</profile>-->
-<!--	</profiles>-->
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.1</version>
+			</plugin>
+		</plugins>
+	</build>
 </project>

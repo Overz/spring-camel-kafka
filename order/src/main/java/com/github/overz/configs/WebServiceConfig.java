@@ -10,28 +10,20 @@ import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.bus.spring.SpringBus;
 import org.apache.cxf.feature.validation.SchemaValidationFeature;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
 
 @Configuration
 public class WebServiceConfig {
 	public static final String ORDER_CXF_SERVICE = "order-cxf-service";
 	public static final String ORDER_CXF_CLIENT = "order-cxf-client";
-
-	private static final Map<String, SchemaValidationType> validationSchemas = Collections.synchronizedMap(Map.of(
-		"processTest", SchemaValidationType.BOTH
-	));
 
 	@Bean(name = Bus.DEFAULT_BUS_ID)
 	public Bus bus(
@@ -45,9 +37,7 @@ public class WebServiceConfig {
 	@Bean
 	@ConditionalOnMissingBean(SchemaValidationFeature.class)
 	public SchemaValidationFeature schemaValidationFeature() {
-		return new SchemaValidationFeature(
-			operationInfo -> validationSchemas.get(operationInfo.getName().getLocalPart())
-		);
+		return new SchemaValidationFeature(operationInfo -> SchemaValidationType.BOTH);
 	}
 
 	@Bean
@@ -84,7 +74,7 @@ public class WebServiceConfig {
 		endpoint.setInInterceptors(Arrays.asList(
 			requiredBodyInterceptor
 		));
-		return endpoint;
+		return endpoint.copy();
 	}
 
 	@Bean(ORDER_CXF_CLIENT)

@@ -88,6 +88,10 @@ camel:
       retries: "3"
       key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
       value-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+  main:
+    context-reload-enabled: true
+    dev-console-enabled: true
+
 
 management:
   server:
@@ -121,8 +125,8 @@ app:
   topics:
     notification: "${TOPIC_ORDER:topic-notification}"
   files:
-    input-test-files: "file:${TEST_FILES_DIR:@project.basedir@/test-files/input}"
-    output-test-files: "file:${TEST_FILES_DIR:@project.basedir@/test-files/output}"
+    input-test-files: "file:@project.basedir@/test-files/input"
+    output-test-files: "file:@project.basedir@/test-files/output"
   api:
     timeout: "60S"
     notification:

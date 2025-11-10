@@ -12,58 +12,13 @@
 
 	<artifactId>order</artifactId>
 	<version>0.0.1</version>
-	<name>${project.artifactId}</name>
-	<description>order</description>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.apache.camel</groupId>
-				<artifactId>camel-bom</artifactId>
-				<version>${camel.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.camel.springboot</groupId>
-				<artifactId>camel-spring-boot-bom</artifactId>
-				<version>${camel.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+	<packaging>jar</packaging>
 
 	<dependencies>
+		<!-- Common module with generated SOAP interfaces -->
 		<dependency>
 			<groupId>com.github.overz</groupId>
 			<artifactId>common</artifactId>
-		</dependency>
-
-		<!-- CXF -->
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-frontend-jaxws</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-transports-http</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-bindings-xml</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-bindings-soap</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-frontend-jaxrs</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.cxf</groupId>
-			<artifactId>cxf-rt-ws-policy</artifactId>
 		</dependency>
 
 		<!-- CAMEL SPRING -->
@@ -115,6 +70,10 @@
 			<groupId>org.apache.camel.springboot</groupId>
 			<artifactId>camel-jsonpath-starter</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-test-spring-junit5</artifactId>
+		</dependency>
 
 		<!-- SPRING -->
 		<dependency>
@@ -165,7 +124,6 @@
 
 	<build>
 		<plugins>
-			<!-- Plugin do Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -177,40 +135,6 @@
 						</exclude>
 					</excludes>
 				</configuration>
-			</plugin>
-
-			<!-- Plugin para gerar classes Java a partir do WSDL -->
-			<plugin>
-				<groupId>org.apache.cxf</groupId>
-				<artifactId>cxf-codegen-plugin</artifactId>
-				<version>${cxf.version}</version>
-				<configuration>
-					<sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
-				</configuration>
-				<executions>
-					<execution>
-						<id>generate-sources</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>wsdl2java</goal>
-						</goals>
-						<configuration>
-							<wsdlOptions>
-								<!-- https://cxf.apache.org/docs/wsdl-to-java.html -->
-								<wsdlOption>
-									<wsdl>${wsdl.path}/order.wsdl</wsdl>
-									<packagenames>com.github.overz.generated</packagenames>
-									<extraargs>
-										<extraarg>-autoNameResolution</extraarg>
-										<extraarg>-all</extraarg>
-										<extraarg>-mark-generated</extraarg>
-										<extraarg>-bareMethods=false</extraarg>
-									</extraargs>
-								</wsdlOption>
-							</wsdlOptions>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

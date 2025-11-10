@@ -79,7 +79,7 @@ public class RouteFileDefinition {
 	}
 
 	public RouteFileDefinition noop() {
-		return this.noop(true);
+		return noop(true);
 	}
 
 	public RouteFileDefinition noop(final Boolean noop) {
@@ -88,11 +88,11 @@ public class RouteFileDefinition {
 	}
 
 	public RouteFileDefinition idempotent() {
-		return this.idempotent(true);
+		return idempotent(true);
 	}
 
 	public RouteFileDefinition noIdempotent() {
-		return this.idempotent(false);
+		return idempotent(false);
 	}
 
 	private RouteFileDefinition idempotent(final Boolean idempotent) {
@@ -139,14 +139,24 @@ public class RouteFileDefinition {
 	}
 
 	public String build() {
+		return build(true);
+	}
+
+	public String build(final boolean clean) {
 		if (list.isEmpty()) {
-			throw new IllegalStateException("Nenhum endpoint definido");
+			throw new IllegalStateException("No property defined");
 		}
 
 		final var first = list.getFirst();
-		return list.size() > 1
+		final var query = list.size() > 1
 			? first + "?" + String.join("&", list.subList(1, list.size()))
 			: first;
+
+		if (clean) {
+			list.clear();
+		}
+
+		return query;
 	}
 
 }

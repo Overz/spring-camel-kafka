@@ -32,7 +32,7 @@ x-kafka-broker-commons: &kafka-broker-commons
 services:
   # https://ui.docs.kafbat.io/configuration/misc-configuration-properties
   kafbat:
-    image: "kafbat/kafka-ui:add8ef2"
+    image: "kafbat/kafka-ui:v1.4.2"
     restart: "always"
     hostname: "kafbat-srv"
     depends_on:

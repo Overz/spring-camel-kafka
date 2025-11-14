@@ -1,10 +1,7 @@
-package com.github.overz.serdes;
+package com.github.overz.kafka;
 
 import com.github.overz.errors.KafkaDeserializationException;
 import lombok.Getter;
-import lombok.Setter;
-import org.apache.camel.CamelContext;
-import org.apache.camel.CamelContextAware;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Deserializer;
 
@@ -12,19 +9,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.function.Predicate;
 
 @Getter
-public abstract class BaseDeserializer<T> implements Deserializer<T>, CamelContextAware {
+public abstract class BaseDeserializer<T, B> extends BaseSerdes<B> implements Deserializer<T> {
 	private final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
 	private Map<String, ?> configs;
 	private boolean isKey;
-
-	@Setter
-	private CamelContext camelContext;
-
-	@Setter
-	private Predicate<Exception> onError;
 
 	@Override
 	public void configure(final Map<String, ?> configs, final boolean isKey) {
@@ -50,7 +40,7 @@ public abstract class BaseDeserializer<T> implements Deserializer<T>, CamelConte
 		try {
 			return this.doDeserialize(data.array());
 		} catch (Exception e) {
-			if (this.onError.test(e)) {
+			if (getOnError().test(e)) {
 				throw new KafkaDeserializationException("Error deserializing data '" + decoded + "' from topic '" + topic + "'", e);
 			}
 

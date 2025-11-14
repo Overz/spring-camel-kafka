@@ -3,6 +3,8 @@ package com.github.overz.routes;
 import com.github.overz.dtos.Notification;
 import com.github.overz.generated.GetOrderRequest;
 import com.github.overz.generated.GetOrderResponse;
+import com.github.overz.utils.Beans;
+import com.github.overz.utils.RouteKafkaDefinition;
 import com.github.overz.utils.RouteUtils;
 import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +16,11 @@ import org.apache.camel.component.mail.MailConstants;
 import org.apache.camel.model.rest.RestParamType;
 import org.apache.cxf.message.MessageContentsList;
 
-import static com.github.overz.configs.WebServiceConfig.ORDER_CXF_SERVICE;
 
 @Slf4j
 @RequiredArgsConstructor
 public class NotificationRouter extends RouteBuilder {
-	private static final String SOAP_ORDER_ENTRYPOINT = "cxf:bean:" + ORDER_CXF_SERVICE;
+	private static final String SOAP_ORDER_ENTRYPOINT = "cxf:bean:" + Beans.ORDER_CXF_SERVICE;
 	private static final String REST_ORDER_ENTRPOINT = "direct:rest-order-entrypoint";
 	private static final String SEND_MAIL = "direct:send-mail";
 	private static final String SAVE_CONFIRMATION = "direct:save-confirmation";
@@ -75,8 +76,13 @@ public class NotificationRouter extends RouteBuilder {
 			.end()
 		;
 
-		final var notificationIdProperty = RouteUtils.exP(Routes.NOTIFICATION_ID);
-		from(RouteUtils.k("{{app.topics.notification}}"))
+		final var notificationKafkaroute = RouteKafkaDefinition.builder()
+			.topic("{{app.topics.notification}}")
+			.valueSerializerBean(Beans.KAFKA_VALUE_SERIALIZER)
+			.valueDeserializerBean(Beans.KAFKA_VALUE_DESERIALIZER)
+			.build();
+
+		from(notificationKafkaroute)
 			.id(RouteUtils.routeId("notification-consumer"))
 			.log("Processing message received: '${body}'")
 			.unmarshal().json(Notification.class)
@@ -87,6 +93,7 @@ public class NotificationRouter extends RouteBuilder {
 			.end()
 		;
 
+		final var notificationIdProperty = RouteUtils.exP(Routes.NOTIFICATION_ID);
 		final var mail = RouteUtils.smtp("{{app.mail.smtp.host}}", "{{app.mail.smtp.port}}");
 		from(SEND_MAIL)
 			.id(RouteUtils.routeId("send-email"))

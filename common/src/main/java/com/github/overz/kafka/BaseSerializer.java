@@ -1,25 +1,16 @@
-package com.github.overz.serdes;
+package com.github.overz.kafka;
 
 import com.github.overz.errors.KafkaSerializationException;
 import lombok.Getter;
-import lombok.Setter;
-import org.apache.camel.CamelContext;
-import org.apache.camel.CamelContextAware;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
-import java.util.function.Predicate;
 
 @Getter
-public abstract class BaseSerializer<T> implements Serializer<T>, CamelContextAware {
+public abstract class BaseSerializer<T, B> extends BaseSerdes<B> implements Serializer<T> {
 	private Map<String, ?> cofigs;
 	private boolean isKey;
-	@Setter
-	private CamelContext camelContext;
-
-	@Setter
-	private Predicate<Exception> onError = e -> false;
 
 	@Override
 	public void configure(final Map<String, ?> configs, final boolean isKey) {
@@ -37,7 +28,7 @@ public abstract class BaseSerializer<T> implements Serializer<T>, CamelContextAw
 		try {
 			return this.doSerialize(data);
 		} catch (Exception e) {
-			if (this.onError.test(e)) {
+			if (getOnError().test(e)) {
 				throw new KafkaSerializationException("Error serializing data '" + data + "' from topic '" + topic + "'", e);
 			}
 
@@ -46,5 +37,4 @@ public abstract class BaseSerializer<T> implements Serializer<T>, CamelContextAw
 	}
 
 	protected abstract byte[] doSerialize(final T data) throws Exception;
-
 }

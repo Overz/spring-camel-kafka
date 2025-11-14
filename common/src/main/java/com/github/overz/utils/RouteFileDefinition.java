@@ -4,12 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-public class RouteFileDefinition {
-	private final List<String> list = new ArrayList<>();
+public class RouteFileDefinition extends BaseRouteDefinition {
+
+	protected RouteFileDefinition() {
+		super(new ConcurrentHashMap<>());
+	}
 
 	@Getter
 	@AllArgsConstructor
@@ -44,37 +46,37 @@ public class RouteFileDefinition {
 	}
 
 	public RouteFileDefinition input(final String input) {
-		append("file:" + input);
+		this.component("file:" + input);
 		return this;
 	}
 
 	public RouteFileDefinition output(final String output) {
-		append("file:" + output);
+		this.component("file:" + output);
 		return this;
 	}
 
 	public RouteFileDefinition fileName(final String fileName) {
-		append("fileName=" + fileName);
+		append("fileName", fileName);
 		return this;
 	}
 
 	public RouteFileDefinition fileExist(final FileExist fileExist) {
-		append("fileExist=" + fileExist.getValue());
+		append("fileExist", fileExist.getValue());
 		return this;
 	}
 
 	public RouteFileDefinition include(final Pattern include) {
-		append("include=" + include.pattern());
+		append("include", include.pattern());
 		return this;
 	}
 
 	public RouteFileDefinition move(final String move) {
-		append("move=" + move);
+		append("move", move);
 		return this;
 	}
 
 	public RouteFileDefinition moveFailed(final String moveFailed) {
-		append("moveFailed=" + moveFailed);
+		append("moveFailed", moveFailed);
 		return this;
 	}
 
@@ -83,7 +85,7 @@ public class RouteFileDefinition {
 	}
 
 	public RouteFileDefinition noop(final Boolean noop) {
-		append("noop=" + noop);
+		append("noop", String.valueOf(noop));
 		return this;
 	}
 
@@ -96,67 +98,37 @@ public class RouteFileDefinition {
 	}
 
 	private RouteFileDefinition idempotent(final Boolean idempotent) {
-		append("idempotent=" + idempotent);
+		append("idempotent", String.valueOf(idempotent));
 		return this;
 	}
 
 	public RouteFileDefinition idempotentKey(final String idempotentKey) {
-		append("idempotentKey=" + idempotentKey);
+		append("idempotentKey", idempotentKey);
 		return this;
 	}
 
 	public RouteFileDefinition delay(final Duration delay) {
-		append("delay=" + delay.toMillis());
+		append("delay", String.valueOf(delay.toMillis()));
 		return this;
 	}
 
 	public RouteFileDefinition maxMessagePerPoll(final Integer maxMessagePerPoll) {
-		append("maxMessagesPerPoll=" + maxMessagePerPoll);
+		append("maxMessagesPerPoll", String.valueOf(maxMessagePerPoll));
 		return this;
 	}
 
 	public RouteFileDefinition readLock(final ReadLock readLock) {
-		append("readLock=" + readLock.getValue());
+		append("readLock", readLock.getValue());
 		return this;
 	}
 
 	public RouteFileDefinition readLockCheckInterval(final Integer readLockCheckInterval) {
-		append("readLockCheckInterval=" + readLockCheckInterval);
+		append("readLockCheckInterval", String.valueOf(readLockCheckInterval));
 		return this;
 	}
 
 	public RouteFileDefinition readLockTimeout(final Duration readLockTimeout) {
-		append("readLockTimeout=" + readLockTimeout.toMillis());
+		append("readLockTimeout", String.valueOf(readLockTimeout.toMillis()));
 		return this;
 	}
-
-	private void append(final String... value) {
-		if (value == null || value.length == 0) {
-			return;
-		}
-
-		list.addAll(List.of(value));
-	}
-
-	public String build() {
-		return build(true);
-	}
-
-	public String build(final boolean clean) {
-		if (list.isEmpty()) {
-			throw new IllegalStateException("No property defined");
-		}
-
-		final var first = list.getFirst();
-		final var query = list.size() > 1
-			? first + "?" + String.join("&", list.subList(1, list.size()))
-			: first;
-
-		if (clean) {
-			list.clear();
-		}
-
-		return query;
-	}
-
 }

@@ -34,14 +34,14 @@ public abstract class BaseDeserializer<T, B> extends BaseSerdes<B> implements De
 
 	@Override
 	public T deserialize(final String topic, final Headers headers, final ByteBuffer data) {
-		final var buffer = StandardCharsets.UTF_8.decode(data);
-		final var decoded = new String(buffer.array());
+		final var bytes = new byte[data.remaining()];
+		data.get(bytes);
 
 		try {
-			return this.doDeserialize(data.array());
+			return this.doDeserialize(bytes);
 		} catch (Exception e) {
 			if (getOnError().test(e)) {
-				throw new KafkaDeserializationException("Error deserializing data '" + decoded + "' from topic '" + topic + "'", e);
+				throw new KafkaDeserializationException("Error deserializing data '" + new String(bytes) + "' from topic '" + topic + "'", e);
 			}
 
 			return null;

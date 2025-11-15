@@ -26,4 +26,8 @@ public class RouteUtils {
 	public String smtp(final String host, final String port) {
 		return String.format("smtp://%s:%s", host, port);
 	}
+
+	public static String h(final String v) {
+		return String.format("${header.%s}", v);
+	}
 }

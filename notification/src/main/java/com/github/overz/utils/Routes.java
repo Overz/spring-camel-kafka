@@ -5,5 +5,5 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class Routes {
 	public final String NOTIFICATION = "NOTIFICATION";
-	public final String NOTIFICATION_ID = "NOTIFICATION_ID";
+	public final String EVENT_ID = "NOTIFICATION_ID";
 }

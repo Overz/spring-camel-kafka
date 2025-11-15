@@ -22,6 +22,7 @@ import org.apache.camel.builder.PredicateBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.cxf.common.message.CxfConstants;
 import org.apache.camel.component.kafka.KafkaConstants;
+import org.apache.camel.model.dataformat.JsonLibrary;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -180,7 +181,7 @@ public class OrderRouter extends RouteBuilder {
 			.removeHeaders("*")
 			.setHeader(KafkaConstants.KEY, simple("${id}"))
 			.log(LoggingLevel.DEBUG, "Marshaling body '${body}' to json format type ...")
-			.marshal().json()
+			.marshal().json(JsonLibrary.Jackson, Notification.class, true)
 			.log("Sending to kafka, topic: '" + topic + "', key '${id}', value: '${body}'")
 			.to(RouteUtils.k(topic))
 			.log("Message sent to kafka, topic '" + topic + "', key '${id}', value: '${body}'")

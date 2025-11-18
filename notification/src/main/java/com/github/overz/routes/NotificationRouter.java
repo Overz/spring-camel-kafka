@@ -60,7 +60,7 @@ public class NotificationRouter extends RouteBuilder {
 			.to(findOrderNotificationRoute)
 			.removeHeaders("*")
 			.convertBodyTo(ArrayList.class)
-//			.marshal().json()
+			.marshal().json()
 			.end()
 		;
 

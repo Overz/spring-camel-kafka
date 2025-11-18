@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.overz.generated.OrderServicePort;
 import com.github.overz.kafka.CustomKafkaClientFactory;
 import com.github.overz.kafka.NotificationDeserializer;
@@ -59,6 +61,7 @@ public class ApplicationConfig implements CamelConfiguration {
 	public ObjectMapper objectMapper() {
 		log.info(Logs.CONFIG_MSG, ObjectMapper.class.getName());
 		return JsonMapper.builder()
+			.addModule(new JavaTimeModule())
 			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 			.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
 			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)

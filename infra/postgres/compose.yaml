@@ -8,7 +8,7 @@ volumes:
 
 services:
   postgres:
-    image: "postgres:17"
+    image: "postgres:18"
     restart: "always"
     hostname: "postgres-srv"
     env_file:
@@ -17,12 +17,12 @@ services:
       - "5432:5432"
     volumes:
       - "./entrypoint/:/docker-entrypoint-initdb.d/"
-      - "postgres:/var/lib/postgresql/data"
+      - "postgres:/var/lib/postgresql/18/data"
     networks:
       - "app"
 
   adminer:
-    image: "adminer:5.0.4"
+    image: "adminer:5.4.1"
     restart: "always"
     hostname: "adminer-srv"
     environment:

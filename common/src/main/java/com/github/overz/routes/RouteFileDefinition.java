@@ -1,4 +1,4 @@
-package com.github.overz.utils;
+package com.github.overz.routes;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

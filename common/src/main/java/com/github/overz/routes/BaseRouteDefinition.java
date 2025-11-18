@@ -1,4 +1,4 @@
-package com.github.overz.utils;
+package com.github.overz.routes;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +15,6 @@ public abstract class BaseRouteDefinition {
 	protected void component(final String componentUri) {
 		if (StringUtils.isEmpty(componentUri)) {
 			throw new IllegalArgumentException("Component URI is empty/null");
-		}
-
-		if (this.componentUri != null) {
-			throw new IllegalStateException("The component uri has already defined: '" + this.componentUri + "'");
 		}
 
 		this.componentUri = componentUri;
@@ -38,7 +34,7 @@ public abstract class BaseRouteDefinition {
 
 	public String build() {
 		if (componentUri == null) {
-			throw new IllegalStateException("Nenhum componente foi definido");
+			throw new IllegalStateException("No component defined");
 		}
 
 		if (map.isEmpty()) {

@@ -1,7 +1,7 @@
 package com.github.overz.routes;
 
 import com.github.overz.configs.ApplicationProperties;
-import com.github.overz.dtos.Notification;
+import com.github.overz.dtos.NotificationEvent;
 import com.github.overz.dtos.OrderRequest;
 import com.github.overz.dtos.OrderResponse;
 import com.github.overz.errors.SoapBadRequestException;
@@ -10,8 +10,6 @@ import com.github.overz.models.Order;
 import com.github.overz.models.OrderStatus;
 import com.github.overz.processors.*;
 import com.github.overz.repositories.OrderRepository;
-import com.github.overz.utils.RouteFileDefinition;
-import com.github.overz.utils.RouteUtils;
 import com.github.overz.utils.Routes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -177,11 +175,11 @@ public class OrderRouter extends RouteBuilder {
 			.id(RouteUtils.routeId("send-to-kafka"))
 			.log("Processing kafka message to send ...")
 			.log(LoggingLevel.DEBUG, "Preparing to send message to kafka ...")
-			.setBody(exchange -> new Notification(exchange.getProperty(Routes.ORDER_ID, String.class)))
+			.setBody(exchange -> new NotificationEvent(exchange.getProperty(Routes.ORDER_ID, String.class)))
 			.removeHeaders("*")
 			.setHeader(KafkaConstants.KEY, simple("${id}"))
 			.log(LoggingLevel.DEBUG, "Marshaling body '${body}' to json format type ...")
-			.marshal().json(JsonLibrary.Jackson, Notification.class, true)
+			.marshal().json(JsonLibrary.Jackson, NotificationEvent.class, true)
 			.log("Sending to kafka, topic: '" + topic + "', key '${id}', value: '${body}'")
 			.to(RouteUtils.k(topic))
 			.log("Message sent to kafka, topic '" + topic + "', key '${id}', value: '${body}'")

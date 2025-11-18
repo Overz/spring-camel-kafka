@@ -1,2 +1,2 @@
-INSERT INTO "notification" (cdnotification, cdorder)
-VALUES (:?cdNotification, :?cdOrder);
+INSERT INTO "notification" (cdorder)
+VALUES (:#${exchangeProperty.cdOrder});

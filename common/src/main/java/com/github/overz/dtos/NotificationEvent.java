@@ -2,12 +2,12 @@ package com.github.overz.dtos;
 
 import java.io.Serializable;
 
-public record Notification(
+public record NotificationEvent(
 	String id,
 	Boolean ok
 ) implements Serializable {
 
-	public Notification(String id) {
+	public NotificationEvent(String id) {
 		this(id, null);
 	}
 }

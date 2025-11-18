@@ -4,7 +4,6 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Beans {
-	public final String JDBC = "jdbc";
 	public final String DATASOURCE = "data-source";
 	public final String OBJECT_MAPPER = "object-mapper";
 	public final String ORDER_CXF_SERVICE = "notification-order-cxf-service";

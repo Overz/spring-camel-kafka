@@ -36,6 +36,7 @@
 		<junit.version>5.12.1</junit.version>
 		<lombok.version>1.18.36</lombok.version>
 		<hikari-cp.version>7.0.2</hikari-cp.version>
+		<jackson.version>3.0.2</jackson.version>
 	</properties>
 
 	<dependencyManagement>
@@ -79,6 +80,14 @@
 				<groupId>org.projectlombok</groupId>
 				<artifactId>lombok</artifactId>
 				<version>${lombok.version}</version>
+			</dependency>
+			<!-- https://mvnrepository.com/artifact/tools.jackson/jackson-bom -->
+			<dependency>
+				<groupId>tools.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${jackson.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -139,6 +148,10 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
 	</dependencies>
 

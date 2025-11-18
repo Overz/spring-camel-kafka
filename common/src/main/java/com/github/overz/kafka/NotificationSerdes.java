@@ -1,12 +1,12 @@
 package com.github.overz.kafka;
 
-import com.github.overz.dtos.Notification;
+import com.github.overz.dtos.NotificationEvent;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 
 public record NotificationSerdes(
-	Serializer<Notification> serializer,
-	Deserializer<Notification> deserializer
-) implements Serde<Notification> {
+	Serializer<NotificationEvent> serializer,
+	Deserializer<NotificationEvent> deserializer
+) implements Serde<NotificationEvent> {
 }

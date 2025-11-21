@@ -59,7 +59,6 @@ public class NotificationRouter extends RouteBuilder {
 			.setProperty(Notification.Fields.cdOrder, header("id"))
 			.to(findOrderNotificationRoute)
 			.removeHeaders("*")
-			.convertBodyTo(ArrayList.class)
 			.marshal().json()
 			.end()
 		;

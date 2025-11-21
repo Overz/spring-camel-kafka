@@ -128,6 +128,4 @@ app:
     input-test-files: "file:@project.basedir@/test-files/input"
     output-test-files: "file:@project.basedir@/test-files/output"
   api:
-    timeout: "60S"
-    notification:
-      base-url: "${NOTIFICATION_SERVICE_BASE_URL:http://localhost:3001/v1}"
+    timeout: "10m"

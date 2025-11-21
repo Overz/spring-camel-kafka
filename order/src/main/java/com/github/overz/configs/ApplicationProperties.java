@@ -58,20 +58,5 @@ public class ApplicationProperties implements Serializable {
 	@NoArgsConstructor
 	public static class Api implements Serializable {
 		private Duration timeout;
-		private NotificationService notification;
-
-
-		@Getter
-		@Setter
-		@Builder
-		@AllArgsConstructor
-		@NoArgsConstructor
-		public static class NotificationService implements Serializable {
-			private String baseUrl;
-
-			public String confirmation(final String id) {
-				return String.format("%s/notification?id=%s", getBaseUrl(), id);
-			}
-		}
 	}
 }

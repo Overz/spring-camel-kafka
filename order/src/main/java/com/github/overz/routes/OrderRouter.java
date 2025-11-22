@@ -254,26 +254,5 @@ public class OrderRouter extends RouteBuilder {
 			})
 			.end()
 		;
-
-//		from(WAIT_FOR_CONFIRMATION_SOAP_ROUTE)
-//			.id("wait-for-confirmation-soap")
-//			.log("Waiting the confirmation of notification with soap request")
-//			.process(exchange -> {
-//				final var id = exchange.getProperty(Routes.REQUEST_CONTENT_ID, String.class);
-//				final var body = new GetOrderRequest();
-//				body.setId(id);
-//				exchange.getIn().setBody(body);
-//			})
-//			.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
-//			.to(SOAP_ORDER_CLIENT)
-//			.process(exchange -> {
-//				final var response = exchange.getIn().getBody();
-//				if (response instanceof GetOrderResponse r) {
-//					exchange.getIn().setBody(new Notification(r.getId(), r.isOk()));
-//					exchange.setProperty("confirmation.ok", true);
-//				}
-//			})
-//			.end()
-//		;
 	}
 }

@@ -95,7 +95,7 @@ camel:
 
 management:
   server:
-    port: "${APP_MANAGMENT_PORT:9090}"
+    port: "${APP_MANAGEMENT_PORT:9090}"
   endpoints:
     access:
       default: read_only
@@ -120,8 +120,8 @@ resilience4j:
 
 app:
   services:
-    order-service: "${ORDER_SERVICE_ENDPOINT:/OrderService}"
-    order-service-port: "${ORDER_SERVICE_ENDPOINT:/OrderServicePort}"
+    orderService: ${ORDER_SERVICE_ENDPOINT:/OrderService}
+    order-client-service: ${CLIENT_ORDER_SERVICE_URL:http://localhost:3001/services/OrderService}
   topics:
     notification: "${TOPIC_ORDER:topic-notification}"
   files:

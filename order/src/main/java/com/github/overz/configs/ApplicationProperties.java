@@ -30,6 +30,7 @@ public class ApplicationProperties implements Serializable {
 	public static class Services implements Serializable {
 		private String orderService;
 		private String orderServicePort;
+		private String orderClientService;
 	}
 
 	@Getter

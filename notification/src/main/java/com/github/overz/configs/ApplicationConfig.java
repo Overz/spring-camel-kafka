@@ -108,6 +108,7 @@ public class ApplicationConfig implements CamelConfiguration {
 		final var endpoint = new CxfEndpoint();
 		endpoint.setWsdlURL("classpath:wsdl/order.wsdl");
 		endpoint.setAddress(orderEndpoint);
+		endpoint.setPublishedEndpointUrl(orderEndpoint);
 		endpoint.setServiceClass(OrderServicePort.class);
 		endpoint.setBus(bus);
 		endpoint.setDataFormat(DataFormat.POJO);

@@ -67,20 +67,25 @@ public class WebServiceConfig {
 
 	@Bean(ORDER_CXF_SERVICE)
 	public CxfEndpoint orderCxfService(
-		@Qualifier("baseOrderCxfEndpoint") final CxfEndpoint baseOrderCxfEndpoint,
-		@Qualifier("requiredBodyInterceptor") final AbstractSoapInterceptor requiredBodyInterceptor
+		@Qualifier("baseOrderCxfEndpoint") final CxfEndpoint base,
+		@Qualifier("requiredBodyInterceptor") final AbstractSoapInterceptor requiredBodyInterceptor,
+		final ApplicationProperties properties
 	) {
-		final var endpoint = baseOrderCxfEndpoint.copy();
+		final var endpoint = base.copy();
 		endpoint.setInInterceptors(Arrays.asList(
 			requiredBodyInterceptor
 		));
-		return endpoint.copy();
+//		endpoint.setPublishedEndpointUrl(properties.getServices().getOrderService());
+		return endpoint;
 	}
 
 	@Bean(ORDER_CXF_CLIENT)
 	public CxfEndpoint orderCxfClient(
-		@Qualifier("baseOrderCxfEndpoint") final CxfEndpoint baseOrderCxfEndpoint
+		@Qualifier("baseOrderCxfEndpoint") final CxfEndpoint base,
+		final ApplicationProperties properties
 	) {
-		return baseOrderCxfEndpoint.copy();
+		final var endpoint = base.copy();
+		endpoint.setAddress(properties.getServices().getOrderClientService());
+		return endpoint;
 	}
 }

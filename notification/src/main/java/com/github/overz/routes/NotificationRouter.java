@@ -16,6 +16,7 @@ import org.apache.camel.model.rest.RestParamType;
 import org.apache.cxf.message.MessageContentsList;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 
 @Slf4j
@@ -71,16 +72,18 @@ public class NotificationRouter extends RouteBuilder {
 					.process(exchange -> {
 						final var data = exchange.getIn().getBody(MessageContentsList.class);
 						final var body = (GetOrderRequest) data.getFirst();
-
-		//				final var opt = repo.findByCdOrder(body.getId());
-						final var resp = new GetOrderResponse();
-						resp.setId(body.getId());
-		//				resp.setOk(opt.isPresent());
-						exchange.getMessage().setBody(resp);
+						exchange.setProperty(Notification.Fields.cdOrder, body.getId());
+					})
+					.to(findOrderNotificationRoute)
+					.process(exchange -> {
+						final var v = new GetOrderResponse();
+						v.setId(exchange.getProperty(Notification.Fields.cdOrder, String.class));
+						v.setOk(!exchange.getMessage().getBody(Collection.class).isEmpty());
+						exchange.getMessage().setBody(new MessageContentsList(v));
 					})
 				.otherwise()
 					.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(400))
-					.setBody(simple("Unsupported operation"))
+					.setBody(constant(new MessageContentsList("Unsupported operation")))
 			// @formatter:on
 			.end()
 		;

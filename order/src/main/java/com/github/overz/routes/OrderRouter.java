@@ -6,7 +6,6 @@ import com.github.overz.dtos.OrderRequest;
 import com.github.overz.dtos.OrderResponse;
 import com.github.overz.errors.SoapBadRequestException;
 import com.github.overz.generated.GetOrderRequest;
-import com.github.overz.generated.GetOrderResponse;
 import com.github.overz.models.Order;
 import com.github.overz.models.OrderStatus;
 import com.github.overz.processors.*;
@@ -22,6 +21,7 @@ import org.apache.camel.component.cxf.common.message.CxfConstants;
 import org.apache.camel.component.http.HttpConstants;
 import org.apache.camel.component.kafka.KafkaConstants;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.apache.cxf.message.MessageContentsList;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -239,17 +239,18 @@ public class OrderRouter extends RouteBuilder {
 		from(WAIT_FOR_NOTIFICATION_CONFIRMATION_SOAP)
 			.removeHeaders("*")
 			.process(exchange -> {
-				final var order = exchange.getProperty(Routes.ORDER, Order.class);
-				final var body = new GetOrderRequest();
-				body.setId(order.getData());
-				exchange.getIn().setBody(body);
+				final var id = exchange.getProperty(Routes.ORDER_ID, String.class);
+
+				final var v = new GetOrderRequest();
+				v.setId(id);
+
+				exchange.getMessage().setBody(new MessageContentsList(v));
 			})
 			.setHeader(CxfConstants.OPERATION_NAME, constant("getOrder"))
 			.to(SOAP_ORDER_CLIENT)
-//			.validate(exchange -> exchange.getIn().getBody(GetOrderResponse.class).isOk())
-//			.setProperty(Routes.CONFIRMED, simple("true"))
 			.process(exchange -> {
-				System.out.println("basdaqwe");
+				final var body = exchange.getMessage().getBody(MessageContentsList.class);
+				exchange.setProperty(Routes.CONFIRMED, !body.isEmpty());
 			})
 			.end()
 		;

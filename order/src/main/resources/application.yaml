@@ -121,7 +121,7 @@ resilience4j:
 app:
   services:
     orderService: ${ORDER_SERVICE_ENDPOINT:/OrderService}
-    order-client-service: ${CLIENT_ORDER_SERVICE_URL:http://localhost:3001/services/OrderService}
+    order-client-service: ${CLIENT_ORDER_SERVICE_URL:http://localhost:3031/services/OrderService}
   topics:
     notification: "${TOPIC_ORDER:topic-notification}"
   files:

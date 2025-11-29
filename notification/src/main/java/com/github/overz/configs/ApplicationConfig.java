@@ -5,41 +5,32 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.overz.generated.OrderServicePort;
-import com.github.overz.kafka.CustomKafkaClientFactory;
 import com.github.overz.kafka.NotificationDeserializer;
 import com.github.overz.kafka.NotificationSerializer;
 import com.github.overz.utils.Beans;
 import com.github.overz.utils.Logs;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.camel.*;
+import org.apache.camel.BeanInject;
+import org.apache.camel.BindToRegistry;
+import org.apache.camel.Configuration;
+import org.apache.camel.PropertyInject;
 import org.apache.camel.component.cxf.common.DataFormat;
 import org.apache.camel.component.cxf.jaxws.CxfEndpoint;
-import org.apache.camel.component.kafka.KafkaComponent;
 import org.apache.cxf.Bus;
-import org.apache.cxf.bus.extension.ExtensionManagerBus;
+import org.apache.cxf.bus.CXFBusFactory;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import javax.sql.DataSource;
-import java.util.UUID;
 
 @Slf4j
 @Configuration
-public class ApplicationConfig implements CamelConfiguration {
-
-	@Override
-	public void configure(final CamelContext ctx) throws Exception {
-		final var pc = ctx.getPropertiesComponent();
-		pc.addOverrideProperty("uuid", UUID.randomUUID().toString());
-		final var kafka = ctx.getComponent(Beans.KAFKA, KafkaComponent.class);
-		kafka.setKafkaClientFactory(new CustomKafkaClientFactory(ctx));
-	}
+public class ApplicationConfig {
 
 	@BindToRegistry(Beans.DATASOURCE)
 	public DataSource dataSource(
@@ -93,7 +84,7 @@ public class ApplicationConfig implements CamelConfiguration {
 	@BindToRegistry(Bus.DEFAULT_BUS_ID)
 	public Bus bus() {
 		log.info(Logs.CONFIG_MSG, Bus.class.getName());
-		final var bus = new ExtensionManagerBus();
+		final var bus = CXFBusFactory.getDefaultBus(true);
 		bus.getInInterceptors().add(new LoggingInInterceptor());
 		bus.getOutInterceptors().add(new LoggingOutInterceptor());
 		return bus;
@@ -102,13 +93,14 @@ public class ApplicationConfig implements CamelConfiguration {
 	@BindToRegistry(Beans.ORDER_CXF_SERVICE)
 	public CxfEndpoint orderCxfService(
 		@PropertyInject("app.soap.order.endpoint") final String orderEndpoint,
+		@PropertyInject("camel.rest.host") final String host,
+		@PropertyInject("app.soap.port") final String port,
 		@BeanInject(Bus.DEFAULT_BUS_ID) final Bus bus
 	) {
 		log.info(Logs.CONFIG_MSG, CxfEndpoint.class.getName());
 		final var endpoint = new CxfEndpoint();
 		endpoint.setWsdlURL("classpath:wsdl/order.wsdl");
-		endpoint.setAddress(orderEndpoint);
-		endpoint.setPublishedEndpointUrl(orderEndpoint);
+		endpoint.setAddress(String.format("http://%s:%s%s", host, port, orderEndpoint));
 		endpoint.setServiceClass(OrderServicePort.class);
 		endpoint.setBus(bus);
 		endpoint.setDataFormat(DataFormat.POJO);

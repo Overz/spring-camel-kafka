@@ -86,6 +86,7 @@ public class WebServiceConfig {
 	) {
 		final var endpoint = base.copy();
 		endpoint.setAddress(properties.getServices().getOrderClientService());
+		endpoint.setPublishedEndpointUrl(properties.getServices().getOrderClientService());
 		return endpoint;
 	}
 }
